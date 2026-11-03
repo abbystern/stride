@@ -16,4 +16,13 @@
 - See `schema.md` for the schema, RLS rules, and application/verification steps.
 - Run `bash scripts/test-workout-database.sh` to test both migrations in a disposable local PostgreSQL database, not Supabase.
 
-The UI still implements authentication only. Workout logging forms, dashboards, nutrition, and recovery features are intentionally not included.
+## Workout logging
+
+- Feature 3 adds authenticated workout history, create, detail, and edit pages under `/app/workouts`, plus confirmed deletion.
+- These pages use the existing Supabase tables and RLS; there is no new migration.
+- Run `npm run test:workout-validation` for pure field-validation tests.
+- Run `npm run test:workout-ui` while the dev server is running for desktop/mobile API-contract browser tests. They intercept Supabase requests and do not modify real accounts or workouts.
+- Browser tests use Replit's Chromium when available; elsewhere install Playwright Chromium or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE`.
+- Browser output and caches are excluded from Git and publishing.
+
+Dashboards, stars, weekly planning, lifting templates, nutrition, and recovery are intentionally not included.

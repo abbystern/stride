@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { useAuth } from "./providers/AuthProvider";
 import {
   hasSupabaseConfig,
@@ -7,6 +7,11 @@ import {
 import AuthPage from "./pages/AuthPage";
 import AccountPage from "./pages/AccountPage";
 import { BrandMark } from "./components/BrandMark";
+import WorkoutHistoryPage from "./pages/workouts/WorkoutHistoryPage";
+import NewWorkoutPage from "./pages/workouts/NewWorkoutPage";
+import WorkoutDetailPage from "./pages/workouts/WorkoutDetailPage";
+import EditWorkoutPage from "./pages/workouts/EditWorkoutPage";
+import "./workouts.css";
 
 function LoadingScreen() {
   return (
@@ -40,7 +45,7 @@ function ProtectedRoute() {
 
   if (!ready) return <LoadingScreen />;
   if (!session) return <Navigate to="/login" replace />;
-  return <AccountPage />;
+  return <Outlet />;
 }
 
 function EntryRoute() {
@@ -58,7 +63,13 @@ export default function App() {
       <Route path="/" element={<EntryRoute />} />
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/signup" element={<AuthPage mode="signup" />} />
-      <Route path="/app" element={<ProtectedRoute />} />
+      <Route path="/app" element={<ProtectedRoute />}>
+        <Route index element={<AccountPage />} />
+        <Route path="workouts" element={<WorkoutHistoryPage />} />
+        <Route path="workouts/new" element={<NewWorkoutPage />} />
+        <Route path="workouts/:id" element={<WorkoutDetailPage />} />
+        <Route path="workouts/:id/edit" element={<EditWorkoutPage />} />
+      </Route>
       <Route path="*" element={<EntryRoute />} />
     </Routes>
   );
