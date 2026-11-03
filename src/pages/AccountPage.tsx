@@ -1,0 +1,72 @@
+import { useState } from "react";
+import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { BrandMark } from "../components/BrandMark";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../providers/AuthProvider";
+
+export default function AccountPage() {
+  const { session } = useAuth();
+  const navigate = useNavigate();
+  const [signOutError, setSignOutError] = useState("");
+  const [pending, setPending] = useState(false);
+
+  async function handleSignOut() {
+    if (!supabase) return;
+    setPending(true);
+    setSignOutError("");
+    const { error } = await supabase.auth.signOut();
+    setPending(false);
+
+    if (error) {
+      setSignOutError("We couldn’t sign you out. Please try again.");
+      return;
+    }
+
+    navigate("/login", { replace: true });
+  }
+
+  return (
+    <main className="account-shell">
+      <header className="account-header">
+        <BrandMark />
+        <button
+          className="signout-button"
+          type="button"
+          onClick={handleSignOut}
+          disabled={pending}
+        >
+          <LogOut size={16} aria-hidden="true" />
+          {pending ? "Signing out…" : "Sign out"}
+        </button>
+      </header>
+
+      <section className="account-content">
+        <span className="eyebrow">YOUR STRIDE STARTS HERE</span>
+        <div className="account-emblem" aria-hidden="true">
+          <span className="emblem-ring ring-a" />
+          <span className="emblem-ring ring-b" />
+          <span className="emblem-dot" />
+        </div>
+        <h1>You’re in.</h1>
+        <p className="account-welcome">
+          Signed in as <strong>{session?.user.email}</strong>
+        </p>
+        <div className="account-divider" />
+        <p className="account-next">
+          Your account is ready. Stride will grow with you, one feature at a
+          time.
+        </p>
+        {signOutError && (
+          <p className="form-error account-error" role="alert">
+            {signOutError}
+          </p>
+        )}
+      </section>
+      <footer className="account-footer">
+        <span>© {new Date().getFullYear()} Stride</span>
+        <span>Your training, your pace.</span>
+      </footer>
+    </main>
+  );
+}
