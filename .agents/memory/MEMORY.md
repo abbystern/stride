@@ -1,0 +1,1 @@
+- [Supabase URL diagnostics](supabase-url-diagnostics.md) — absolute-path health checks can hide a misconfigured SDK base URL; verify the SDK-generated request path.

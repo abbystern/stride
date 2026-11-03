@@ -1,6 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./providers/AuthProvider";
-import { hasSupabaseConfig } from "./lib/supabase";
+import {
+  hasSupabaseConfig,
+  supabaseConfigurationError,
+} from "./lib/supabase";
 import AuthPage from "./pages/AuthPage";
 import AccountPage from "./pages/AccountPage";
 import { BrandMark } from "./components/BrandMark";
@@ -21,6 +24,7 @@ function ConfigurationScreen() {
       <section className="config-card">
         <span className="eyebrow">One quick setup step</span>
         <h1>Connect your Stride project</h1>
+        <p role="alert">{supabaseConfigurationError}</p>
         <p>
           Add <code>VITE_SUPABASE_URL</code> and{" "}
           <code>VITE_SUPABASE_ANON_KEY</code> to this Replit&apos;s Secrets,

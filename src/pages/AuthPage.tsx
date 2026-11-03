@@ -31,6 +31,9 @@ function friendlyAuthError(
 ) {
   const normalized = `${code ?? ""} ${message}`.toLowerCase();
 
+  if (normalized.includes("invalid path specified in request url")) {
+    return "Supabase received an invalid API URL. Use the project’s base URL for VITE_SUPABASE_URL, without /rest/v1 or /auth/v1, then restart the app.";
+  }
   if (
     normalized.includes("redirect_to") ||
     normalized.includes("redirect url") ||
@@ -167,11 +170,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
       if (result.error) {
         reportAuthFailure(result.error, mode);
         setError(
-          friendlyAuthError(
-            result.error.message,
-            result.error.code,
-            mode,
-          ),
+          friendlyAuthError(result.error.message, result.error.code, mode),
         );
         return;
       }
