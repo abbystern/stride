@@ -7,9 +7,61 @@ import { useAuth } from "../providers/AuthProvider";
 
 type AuthMode = "login" | "signup";
 
-function friendlyAuthError(message: string, code?: string) {
+type SupabaseAuthFailure = {
+  message: string;
+  code?: string;
+  status?: number;
+};
+
+function reportAuthFailure(error: SupabaseAuthFailure, mode: AuthMode) {
+  if (!import.meta.env.DEV) return;
+
+  console.error("[Stride auth] Supabase request failed", {
+    flow: mode,
+    code: error.code,
+    status: error.status,
+    message: error.message,
+  });
+}
+
+function friendlyAuthError(
+  message: string,
+  code: string | undefined,
+  mode: AuthMode,
+) {
   const normalized = `${code ?? ""} ${message}`.toLowerCase();
 
+  if (
+    normalized.includes("redirect_to") ||
+    normalized.includes("redirect url") ||
+    normalized.includes("redirect uri")
+  ) {
+    return "Supabase rejected this app’s email-confirmation redirect. Add this Replit app origin under Supabase Authentication → URL Configuration → Redirect URLs, then try again.";
+  }
+  if (
+    mode === "signup" &&
+    (normalized.includes("database error saving new user") ||
+      normalized.includes("handle_new_user") ||
+      normalized.includes("on_auth_user_created") ||
+      normalized.includes("public.users") ||
+      normalized.includes("pgrst205"))
+  ) {
+    return "Your account couldn’t be saved because the Supabase profile table or signup trigger is missing. Run supabase/migrations/001_auth_users.sql in the Supabase SQL Editor, then try again.";
+  }
+  if (
+    normalized.includes("signup_disabled") ||
+    normalized.includes("signups not allowed") ||
+    normalized.includes("signups are disabled")
+  ) {
+    return "New accounts are disabled in Supabase. Enable email sign-ups under Supabase Authentication → Providers → Email.";
+  }
+  if (
+    normalized.includes("error sending confirmation email") ||
+    normalized.includes("email rate limit") ||
+    normalized.includes("email rate_limit")
+  ) {
+    return "Supabase couldn’t send the verification email. Check the project’s SMTP settings and email limits, then try again.";
+  }
   if (
     normalized.includes("invalid_credentials") ||
     normalized.includes("invalid login credentials")
@@ -41,7 +93,30 @@ function friendlyAuthError(message: string, code?: string) {
   if (normalized.includes("rate limit") || normalized.includes("too many")) {
     return "There have been too many attempts. Please wait a moment and try again.";
   }
-  return "We couldn’t complete that request. Please check your connection and try again.";
+
+  const safeMessage = message.replace(/\s+/g, " ").trim().slice(0, 180);
+  const reference = code ? ` (${code})` : "";
+  return safeMessage
+    ? `Supabase couldn’t complete the request${reference}: ${safeMessage}`
+    : "Supabase couldn’t complete the request. Check the project’s Auth logs and try again.";
+}
+
+function friendlyThrownError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("failed to fetch") ||
+    normalized.includes("network") ||
+    normalized.includes("fetch")
+  ) {
+    return "Stride couldn’t reach Supabase. Check the project URL, network connection, and browser access, then try again.";
+  }
+
+  const safeMessage = message.replace(/\s+/g, " ").trim().slice(0, 180);
+  return safeMessage
+    ? `Stride couldn’t complete the Supabase request: ${safeMessage}`
+    : "Stride couldn’t complete the Supabase request. Please try again.";
 }
 
 export default function AuthPage({ mode }: { mode: AuthMode }) {
@@ -90,7 +165,14 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
           });
 
       if (result.error) {
-        setError(friendlyAuthError(result.error.message, result.error.code));
+        reportAuthFailure(result.error, mode);
+        setError(
+          friendlyAuthError(
+            result.error.message,
+            result.error.code,
+            mode,
+          ),
+        );
         return;
       }
 
@@ -100,8 +182,13 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
       }
 
       navigate("/app", { replace: true });
-    } catch {
-      setError("We couldn’t connect to Stride. Check your internet and try again.");
+    } catch (cause) {
+      const thrownError =
+        cause instanceof Error
+          ? { message: cause.message, code: cause.name }
+          : { message: String(cause) };
+      reportAuthFailure(thrownError, mode);
+      setError(friendlyThrownError(cause));
     } finally {
       setPending(false);
     }
