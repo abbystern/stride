@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { BookOpen, Plus } from "lucide-react";
 import { BrandMark } from "../components/BrandMark";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../providers/AuthProvider";
@@ -54,9 +55,15 @@ export default function AccountPage() {
         </p>
         <div className="account-divider" />
         <p className="account-next">
-          Your account is ready. Stride will grow with you, one feature at a
-          time.
+          A little space to keep track of the ways you move.
         </p>
+        <div className="home-nav-block">
+          <p>Your training journal</p>
+          <div className="home-nav-actions">
+            <Link to="/app/workouts"><BookOpen size={15} aria-hidden="true" /> Workout history</Link>
+            <Link to="/app/workouts/new"><Plus size={15} aria-hidden="true" /> Log a workout</Link>
+          </div>
+        </div>
         {signOutError && (
           <p className="form-error account-error" role="alert">
             {signOutError}
