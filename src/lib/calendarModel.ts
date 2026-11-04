@@ -39,7 +39,7 @@ export function calculateCalendarWeek(workouts: readonly Workout[], weekStart: s
       date,
       label: new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }),
       workouts: workouts.filter((workout) => workout.date === date)
-        .sort((a, b) => a.title.localeCompare(b.title) || a.id.localeCompare(b.id)),
+        .sort(compareCalendarWorkouts),
     };
   });
   let scheduledMiles = 0;
@@ -53,4 +53,39 @@ export function calculateCalendarWeek(workouts: readonly Workout[], weekStart: s
     }
   }
   return { days, scheduledMiles, completedMiles };
+}
+
+export function compareCalendarWorkouts(a: Workout, b: Workout): number {
+  const aTime = a.scheduled_start_time?.slice(0, 5) || "99:99";
+  const bTime = b.scheduled_start_time?.slice(0, 5) || "99:99";
+  return aTime.localeCompare(bTime) || a.title.localeCompare(b.title) || a.id.localeCompare(b.id);
+}
+
+export function calendarMonthStart(date: string): string {
+  if (!isCalendarDate(date)) throw new Error("Choose a valid calendar date.");
+  return `${date.slice(0, 7)}-01`;
+}
+
+export function shiftCalendarMonth(date: string, months: number): string {
+  const value = new Date(`${calendarMonthStart(date)}T12:00:00`);
+  value.setMonth(value.getMonth() + months);
+  return localDateKey(value);
+}
+
+export function calculateCalendarMonth(workouts: readonly Workout[], date: string) {
+  const monthStart = calendarMonthStart(date);
+  const gridStart = calendarWeekStart(monthStart);
+  return {
+    monthStart,
+    label: new Date(`${monthStart}T12:00:00`).toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+    days: Array.from({ length: 42 }, (_, index) => {
+      const key = shiftCalendarDate(gridStart, index);
+      return {
+        date: key,
+        inMonth: key.slice(0, 7) === monthStart.slice(0, 7),
+        label: new Date(`${key}T12:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }),
+        workouts: workouts.filter((workout) => workout.date === key).sort(compareCalendarWorkouts),
+      };
+    }),
+  };
 }

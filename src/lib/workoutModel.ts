@@ -20,6 +20,8 @@ export type Workout = {
   user_id: string;
   workout_type_id: string;
   date: string;
+  scheduled_start_time?: string | null;
+  template_id?: string | null;
   title: string;
   status: WorkoutStatus;
   run_type: string | null;
@@ -35,6 +37,7 @@ export type Workout = {
 export type WorkoutFormValues = {
   title: string;
   date: string;
+  scheduled_start_time?: string;
   workout_type_id: string;
   status: string;
   run_type: string;
@@ -48,7 +51,7 @@ export type WorkoutFormValues = {
 export type WorkoutFieldErrors = Partial<Record<keyof WorkoutFormValues, string>>;
 export type WorkoutPayload = Omit<
   Workout,
-  "id" | "user_id" | "created_at" | "workout_type"
+  "id" | "user_id" | "created_at" | "workout_type" | "template_id"
 >;
 
 export function localDateString(date = new Date()) {
@@ -78,6 +81,8 @@ export function workoutToFormValues(workout: Workout): WorkoutFormValues {
   return {
     title: workout.title,
     date: workout.date,
+    scheduled_start_time: workout.scheduled_start_time === undefined
+      ? undefined : (workout.scheduled_start_time?.slice(0, 5) ?? ""),
     workout_type_id: workout.workout_type_id,
     status: workout.status,
     run_type: workout.run_type ?? "",
@@ -108,6 +113,10 @@ export function validateWorkout(
 
   const activity = types.find((type) => type.id === values.workout_type_id);
   if (!activity) errors.workout_type_id = "Choose an activity type.";
+  const time = values.scheduled_start_time?.trim();
+  if (time && !isWorkoutTime(time)) {
+    errors.scheduled_start_time = "Choose a valid start time, from 00:00 to 23:59.";
+  }
   if (!WORKOUT_STATUSES.some((status) => status.value === values.status)) {
     errors.status = "Choose Planned, In Progress, or Completed.";
   }
@@ -126,9 +135,10 @@ export function validateWorkout(
     return number;
   }
 
-  const distance = measurement("distance_miles", "Distance");
-  const duration = measurement("duration_minutes", "Duration");
-  const elevation = measurement("elevation_feet", "Elevation gain");
+  const rest = activity?.name === "Rest Day";
+  const distance = rest ? null : measurement("distance_miles", "Distance");
+  const duration = rest ? null : measurement("duration_minutes", "Duration");
+  const elevation = rest ? null : measurement("elevation_feet", "Elevation gain");
   if (Object.keys(errors).length) return { errors, payload: null };
 
   const running = activity?.name === "Running";
@@ -137,6 +147,7 @@ export function validateWorkout(
     payload: {
       title: values.title.trim(),
       date: values.date,
+      ...(time === undefined ? {} : { scheduled_start_time: time || null }),
       workout_type_id: values.workout_type_id,
       status: values.status as WorkoutStatus,
       distance_miles: distance,
@@ -156,4 +167,16 @@ export function formatWorkoutDate(value: string) {
     day: "numeric",
     year: "numeric",
   });
+}
+
+export function isWorkoutTime(value: string): boolean {
+  return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
+}
+
+/** A local wall-clock time, never a timestamp or UTC conversion. */
+export function formatWorkoutTime(value?: string | null): string {
+  if (!value) return "No time set";
+  if (!/^(?:[01]\d|2[0-3]):[0-5]\d(?::00)?$/.test(value)) return "Invalid time";
+  const [hours, minutes] = value.split(":").map(Number);
+  return `${hours % 12 || 12}:${String(minutes).padStart(2, "0")} ${hours >= 12 ? "PM" : "AM"}`;
 }

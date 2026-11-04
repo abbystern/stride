@@ -3,10 +3,16 @@ import { supabase } from "./supabase";
 import type { Workout, WorkoutPayload, WorkoutType } from "./workoutModel";
 
 const selection =
-  "id,user_id,workout_type_id,date,title,status,run_type,distance_miles,duration_minutes,target_pace,elevation_feet,notes,created_at,workout_type:workout_types(id,name)";
+  // '*' returns the time when migration 006 exists, without making old-schema
+  // untimed reads fail before the manual migration is applied.
+  "*,workout_type:workout_types(id,name)";
 
 export function workoutErrorMessage(error: unknown) {
   const details = error as { code?: string; message?: string };
+  if ((details?.code === "PGRST204" || details?.code === "42703") &&
+      details.message?.includes("scheduled_start_time")) {
+    return "Workout start times aren’t set up yet. Run migration 006_calendar_improvements.sql in Supabase, then try again.";
+  }
   if (details?.code === "PGRST205" || details?.code === "42P01") {
     return "Workout storage isn’t set up yet. Run migration 002_workout_database.sql in Supabase, then try again.";
   }
@@ -75,15 +81,14 @@ export async function getWorkout(id: string, userId: string, signal?: AbortSigna
   requireId(id);
   const query = client().from("workouts").select(selection).eq("id", id).eq("user_id", userId);
   const { data, error } = await (signal ? query.abortSignal(signal) : query)
-    .maybeSingle().overrideTypes<Workout | null, { merge: false }>();
+    .maybeSingle<Workout>();
   if (error) throw error;
   return data;
 }
 
 export async function insertWorkout(payload: WorkoutPayload, userId: string): Promise<Workout> {
   const { data, error } = await client().from("workouts")
-    .insert({ ...payload, user_id: userId }).select(selection).single()
-    .overrideTypes<Workout, { merge: false }>();
+    .insert({ ...payload, user_id: userId }).select(selection).single<Workout>();
   if (error) throw error;
   return data;
 }
@@ -91,8 +96,7 @@ export async function insertWorkout(payload: WorkoutPayload, userId: string): Pr
 export async function saveWorkout(id: string, payload: WorkoutPayload, userId: string): Promise<Workout> {
   requireId(id);
   const { data, error } = await client().from("workouts").update(payload)
-    .eq("id", id).eq("user_id", userId).select(selection).maybeSingle()
-    .overrideTypes<Workout | null, { merge: false }>();
+    .eq("id", id).eq("user_id", userId).select(selection).maybeSingle<Workout>();
   if (error) throw error;
   if (!data) throw new Error("Workout not found or unavailable to your account. Your changes weren’t saved.");
   return data;
@@ -110,8 +114,7 @@ export async function rescheduleWorkout(id: string, date: string, userId: string
   requireId(id);
   if (!isCalendarDate(date)) throw new Error("Choose a valid workout date.");
   const { data, error } = await client().from("workouts").update({ date })
-    .eq("id", id).eq("user_id", userId).select(selection).maybeSingle()
-    .overrideTypes<Workout | null, { merge: false }>();
+    .eq("id", id).eq("user_id", userId).select(selection).maybeSingle<Workout>();
   if (error) throw error;
   if (!data) throw new Error("Workout not found or unavailable to your account. The date wasn't changed.");
   return data;

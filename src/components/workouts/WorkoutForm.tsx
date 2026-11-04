@@ -14,9 +14,9 @@ import {
 } from "../../lib/workoutModel";
 import { WorkoutLayout } from "./WorkoutLayout";
 
-type Props = { workout?: Workout; mode: "create" | "edit"; initialDate?: string };
+type Props = { workout?: Workout; mode: "create" | "edit"; initialDate?: string; initialRest?: boolean };
 
-export function WorkoutForm({ workout, mode, initialDate }: Props) {
+export function WorkoutForm({ workout, mode, initialDate, initialRest = false }: Props) {
   const navigate = useNavigate();
   const { types, loading: typesLoading, error: typesError, reload: reloadTypes } = useWorkoutTypes();
   const { pending, error: mutationError, clearError, createWorkout, updateWorkout } = useWorkoutMutations();
@@ -25,6 +25,7 @@ export function WorkoutForm({ workout, mode, initialDate }: Props) {
   }));
   const [errors, setErrors] = useState<WorkoutFieldErrors>({});
   const [initialized, setInitialized] = useState(mode === "create");
+  const [restPrefillDone, setRestPrefillDone] = useState(false);
 
   useEffect(() => {
     if (mode === "edit" && workout && !initialized) {
@@ -34,10 +35,48 @@ export function WorkoutForm({ workout, mode, initialDate }: Props) {
   }, [mode, workout, initialized]);
 
   const running = types.find((type) => type.id === values.workout_type_id)?.name === "Running";
+  const selectedActivity = types.find((type) => type.id === values.workout_type_id);
+  const isRestDay = selectedActivity?.name === "Rest Day";
+  const isTemplatedStrength = Boolean(workout?.template_id) && workout?.workout_type?.name === "Strength Training";
+
+  useEffect(() => {
+    if (mode !== "create" || !initialRest || typesLoading || restPrefillDone) return;
+    const rest = types.find((type) => type.name === "Rest Day");
+    if (!rest) return;
+    setValues((current) => ({
+      ...current,
+      workout_type_id: rest.id,
+      title: current.title.trim() ? current.title : "Rest Day",
+      run_type: "",
+      target_pace: "",
+      distance_miles: "",
+      duration_minutes: "",
+      elevation_feet: "",
+    }));
+    setRestPrefillDone(true);
+  }, [initialRest, mode, restPrefillDone, types, typesLoading]);
 
   function setField<K extends keyof WorkoutFormValues>(field: K, value: WorkoutFormValues[K]) {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
+    clearError();
+  }
+
+  function changeActivity(value: string) {
+    const rest = types.find((type) => type.id === value)?.name === "Rest Day";
+    setValues((current) => ({
+      ...current,
+      workout_type_id: value,
+      ...(rest ? {
+        title: current.title.trim() ? current.title : "Rest Day",
+        run_type: "",
+        target_pace: "",
+        distance_miles: "",
+        duration_minutes: "",
+        elevation_feet: "",
+      } : {}),
+    }));
+    setErrors((current) => ({ ...current, workout_type_id: undefined }));
     clearError();
   }
 
@@ -100,7 +139,7 @@ export function WorkoutForm({ workout, mode, initialDate }: Props) {
               <ArrowLeft size={15} aria-hidden="true" /> {mode === "edit" ? "Back to workout" : "Workout history"}
             </Link>
             <span className="eyebrow">{mode === "edit" ? "YOUR JOURNAL" : "ADD TO YOUR JOURNAL"}</span>
-            <h1>{mode === "edit" ? "Edit workout" : "Log a workout"}</h1>
+            <h1>{mode === "edit" ? "Edit workout" : isRestDay || initialRest ? "Schedule a rest day" : "Log a workout"}</h1>
             <p>Keep the details that matter to you.</p>
           </div>
         </div>
@@ -120,6 +159,11 @@ export function WorkoutForm({ workout, mode, initialDate }: Props) {
           <section className="workout-panel">
             <form className="workout-form" onSubmit={submit} noValidate>
               {mutationError && <p className="form-error workout-form-error" role="alert">{mutationError}</p>}
+              {initialRest && !types.some((type) => type.name === "Rest Day") && !typesLoading && (
+                <p className="form-error workout-form-error" role="alert">
+                  Rest Day isn’t available yet. Apply Supabase migration 006, then reload activity types to enable rest-day scheduling.
+                </p>
+              )}
               <div className="workout-form-grid">
                 <div className="workout-field workout-field--full">
                   <label htmlFor="title">Workout title <span aria-hidden="true">*</span></label>
@@ -132,8 +176,13 @@ export function WorkoutForm({ workout, mode, initialDate }: Props) {
                   {fieldError("date")}
                 </div>
                 <div className="workout-field">
+                  <label htmlFor="scheduled_start_time">Start time (optional)</label>
+                  <input id="scheduled_start_time" name="scheduled_start_time" type="time" step={60} value={values.scheduled_start_time ?? ""} onChange={(e) => setField("scheduled_start_time", e.target.value)} disabled={pending} />
+                  {fieldError("scheduled_start_time")}
+                </div>
+                <div className="workout-field">
                   <label htmlFor="workout_type_id">Activity <span aria-hidden="true">*</span></label>
-                  <select {...commonProps("workout_type_id")} value={values.workout_type_id} onChange={(e) => setField("workout_type_id", e.target.value)}>
+                  <select {...commonProps("workout_type_id")} value={values.workout_type_id} onChange={(e) => changeActivity(e.target.value)} disabled={pending || isTemplatedStrength}>
                     <option value="">Choose an activity</option>
                     {types.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
                   </select>
@@ -146,7 +195,7 @@ export function WorkoutForm({ workout, mode, initialDate }: Props) {
                   </select>
                   {fieldError("status")}
                 </div>
-                {running && (
+                {!isRestDay && running && (
                   <>
                     <div className="workout-field">
                       <label htmlFor="run_type">Run type</label>
@@ -162,21 +211,21 @@ export function WorkoutForm({ workout, mode, initialDate }: Props) {
                     </div>
                   </>
                 )}
-                <div className="workout-field">
+                {!isRestDay && <div className="workout-field">
                   <label htmlFor="distance_miles">Distance (miles)</label>
                   <input {...commonProps("distance_miles")} type="number" inputMode="decimal" min="0" step="any" value={values.distance_miles} onChange={(e) => setField("distance_miles", e.target.value)} />
                   {fieldError("distance_miles")}
-                </div>
-                <div className="workout-field">
+                </div>}
+                {!isRestDay && <div className="workout-field">
                   <label htmlFor="duration_minutes">Duration (minutes)</label>
                   <input {...commonProps("duration_minutes")} type="number" inputMode="decimal" min="0" step="any" value={values.duration_minutes} onChange={(e) => setField("duration_minutes", e.target.value)} />
                   {fieldError("duration_minutes")}
-                </div>
-                <div className="workout-field">
+                </div>}
+                {!isRestDay && <div className="workout-field">
                   <label htmlFor="elevation_feet">Elevation gain (feet)</label>
                   <input {...commonProps("elevation_feet")} type="number" inputMode="decimal" min="0" step="any" value={values.elevation_feet} onChange={(e) => setField("elevation_feet", e.target.value)} />
                   {fieldError("elevation_feet")}
-                </div>
+                </div>}
                 <div className="workout-field workout-field--full">
                   <label htmlFor="notes">Notes</label>
                   <textarea {...commonProps("notes")} value={values.notes} onChange={(e) => setField("notes", e.target.value)} placeholder="Anything you want to remember about this session" />

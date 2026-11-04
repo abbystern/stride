@@ -5,13 +5,13 @@ import type { WeeklyGoal } from "../../../src/lib/weeklyGoals";
 
 export const owner = "11111111-1111-4111-8111-111111111111";
 export const otherOwner = "22222222-2222-4222-8222-222222222222";
-export const activities = ["Running", "Walking", "Hiking", "Cycling", "Strength Training", "Pilates", "Physical Therapy", "Other"]
+export const activities = ["Running", "Walking", "Hiking", "Cycling", "Strength Training", "Pilates", "Physical Therapy", "Other", "Rest Day"]
   .map((name, index) => ({ name, id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}` }));
 
 export function entry(overrides: Partial<Workout> = {}): Workout {
   return {
     id: crypto.randomUUID(), user_id: owner, workout_type_id: activities[0].id,
-    date: "2026-11-02", title: "Monday easy run", status: "planned",
+    date: "2026-11-02", scheduled_start_time: null, title: "Monday easy run", status: "planned",
     distance_miles: 4, duration_minutes: 40, run_type: "Easy/Base",
     target_pace: null, elevation_feet: 0, notes: "Preserve these notes",
     created_at: "2026-11-01T12:00:00Z", workout_type: activities[0], ...overrides,
@@ -21,7 +21,7 @@ export function entry(overrides: Partial<Workout> = {}): Workout {
 export async function calendarBackend(page: Page, signIn = true) {
   const state = {
     rows: [] as Workout[], goals: [] as WeeklyGoal[], errors: [] as string[],
-    failMove: false, failGoalSave: false, missingGoals: false, failRead: false,
+    failMove: false, failGoalSave: false, missingGoals: false, failRead: false, missingTimes: false, missingRest: false,
     patchCalls: 0, goalWriteCalls: 0, workoutReadCalls: 0,
     lastPatch: null as Record<string, unknown> | null,
   };
@@ -46,7 +46,7 @@ export async function calendarBackend(page: Page, signIn = true) {
     const method = request.method();
     const failure = () => route.fulfill({ status: 503, json: { code: "PGRST000", message: "Fixture outage" } });
     if (table === "stars") return route.fulfill({ json: [] });
-    if (table === "workout_types") return route.fulfill({ json: activities });
+    if (table === "workout_types") return route.fulfill({ json: state.missingRest ? activities.filter((type) => type.name !== "Rest Day") : activities });
     if (table === "weekly_goals") {
       if (state.missingGoals) return route.fulfill({ status: 404, json: { code: "PGRST205", message: "Fixture: missing table" } });
       if (method === "GET") {
@@ -71,6 +71,7 @@ export async function calendarBackend(page: Page, signIn = true) {
     if (method === "POST") {
       const body = request.postDataJSON();
       expect(body.user_id).toBe(owner);
+      if (state.missingTimes && "scheduled_start_time" in body) return route.fulfill({ status: 400, json: { code: "PGRST204", message: "Could not find scheduled_start_time" } });
       const row = entry(body);
       state.rows.push(row);
       return route.fulfill({ status: 201, json: joined(row) });
@@ -84,12 +85,23 @@ export async function calendarBackend(page: Page, signIn = true) {
       const offset = Number(url.searchParams.get("offset") ?? 0);
       const limit = Number(url.searchParams.get("limit") ?? 500);
       const slice = rows.slice(offset, offset + limit);
-      return route.fulfill({ headers: { "content-range": slice.length ? `${offset}-${offset + slice.length - 1}/${rows.length}` : `*/${rows.length}` }, json: slice.map(joined) });
+      return route.fulfill({ headers: { "content-range": slice.length ? `${offset}-${offset + slice.length - 1}/${rows.length}` : `*/${rows.length}` }, json: slice.map((row) => {
+        const result = joined(row);
+        if (state.missingTimes) delete result.scheduled_start_time;
+        return result;
+      }) });
+    }
+    if (method === "DELETE") {
+      const index = state.rows.findIndex((item) => item.id === id && item.user_id === owner);
+      const deleted = index < 0 ? [] : state.rows.splice(index, 1).map((row) => ({ id: row.id }));
+      return route.fulfill({ json: deleted });
     }
     expect(method).toBe("PATCH");
     state.patchCalls++;
     state.lastPatch = request.postDataJSON();
-    expect(Object.keys(state.lastPatch!)).toEqual(["date"]);
+    expect(state.lastPatch).not.toHaveProperty("user_id");
+    expect(Object.keys(state.lastPatch!).every((key) => ["date", "scheduled_start_time", "title", "workout_type_id", "status", "run_type", "distance_miles", "duration_minutes", "target_pace", "elevation_feet", "notes"].includes(key))).toBe(true);
+    if (state.missingTimes && "scheduled_start_time" in state.lastPatch!) return route.fulfill({ status: 400, json: { code: "PGRST204", message: "Could not find scheduled_start_time" } });
     if (state.failMove) { state.failMove = false; return failure(); }
     const row = state.rows.find((item) => item.id === id && item.user_id === owner);
     if (!row) return route.fulfill({ json: [] });

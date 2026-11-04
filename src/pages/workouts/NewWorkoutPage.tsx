@@ -5,5 +5,6 @@ import { isCalendarDate } from "../../lib/calendarModel";
 export default function NewWorkoutPage() {
   const [params] = useSearchParams();
   const date = params.get("date") ?? "";
-  return <WorkoutForm key={date} mode="create" initialDate={isCalendarDate(date) ? date : undefined} />;
+  const initialRest = params.get("activity") === "rest";
+  return <WorkoutForm key={`${date}:${initialRest}`} mode="create" initialDate={isCalendarDate(date) ? date : undefined} initialRest={initialRest} />;
 }

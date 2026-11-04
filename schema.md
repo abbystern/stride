@@ -11,6 +11,7 @@
 | `public.stars` | Defined in `003_stars.sql`, with local security tests | User confirmed Feature 5 is working; remote schema not independently inspected |
 | `public.weekly_goals` | Defined and locally tested in `004_training_calendar.sql` | Run this migration manually in Supabase; remote application is not verified |
 | Strength templates, exercises, template exercises, workout sets | Defined and locally tested in `005_strength_tracker.sql` | Apply migration 005 manually; remote application has not been verified |
+| Workout local start times and Rest Day activity | Defined and locally tested in `006_calendar_improvements.sql` | Apply migration 006 manually after 001–005 |
 
 Authentication and workout logging/validation are implemented. Feature 5 adds
 private favorites and a Starred Workouts page. The dashboard and training
@@ -57,6 +58,7 @@ Seeded names:
 6. Walking
 7. Hiking
 8. Other
+9. Rest Day (added by migration 006)
 
 **Permissions and RLS:** Authenticated users can read all types. Anonymous users have no access. Clients cannot insert, edit, or delete types. The read policy applies only to the `authenticated` role.
 
@@ -75,6 +77,7 @@ Source: `supabase/migrations/002_workout_database.sql`.
 | `workout_type_id` | `uuid` | Required | FK to `public.workout_types.id`, `ON DELETE RESTRICT` |
 | `template_id` | `uuid` | Optional; migration 005 | Composite owner-matching FK to `workout_templates(id, user_id)` |
 | `date` | `date` | Required; `current_date` | Workout's planned or actual calendar date |
+| `scheduled_start_time` | `time without time zone` | Optional; null; migration 006 | Local wall-clock time, 00:00–23:59, with seconds exactly zero |
 | `title` | `text` | Required | Must contain a non-whitespace character |
 | `status` | `text` | Required; `'planned'` | Exactly `planned`, `in_progress`, or `completed` |
 | `run_type` | `text` | Optional; null | Descriptive running subtype |
@@ -103,6 +106,7 @@ Indexes:
 | Strength Training | Existing workout record with optional template, captured exercise targets, actual set weights/reps, completion, and prior-performance comparison |
 | Cycling | Date, duration, status, notes, and optional distance |
 | Pilates / Physical Therapy / Other | Date, duration, status, notes |
+| Rest Day | Date, optional local start time, title, status, notes; no training metrics or strength template |
 
 Activity measurements remain nullable. A planned session need not already have actual results. The database does not reject a metric merely because a future imported activity uses it with a different type.
 
@@ -471,7 +475,46 @@ Local verification: `bash scripts/test-workout-database.sh` exercises real
 PostgreSQL constraints, RLS, RPCs, rollbacks, snapshot preservation, identity
 reuse, scheduled-workout attachment, prior results, reruns, and cascades.
 
-## 10. Planned tables — not implemented
+## 10. Calendar usability: local start times and Rest Day
+
+Migration: `supabase/migrations/006_calendar_improvements.sql`. Run the complete
+file in the existing Supabase SQL Editor **after migrations 001–005**, then
+reload the app. The agent's automated database tests use a disposable local
+database; remote SQL application is not claimed.
+
+No scheduling table is introduced. Calendar entries remain owner-scoped rows
+in `public.workouts`, with the existing profile, stars, strength sets, dates,
+CRUD, and four RLS policies retained.
+
+- Adds nullable `scheduled_start_time time without time zone`. Date and time
+  are separate local planning values, not a UTC timestamp or an appointment
+  with an inferred timezone. Time must be within 00:00–23:59 and have zero
+  seconds; null means no scheduled time.
+- Seeds one shared, authenticated-read-only `workout_types` record named
+  **Rest Day**, using the existing unique name constraint.
+- An invoker trigger rejects Rest Day training metrics (`run_type`, distance,
+  duration, target pace, elevation) or a strength template. These fields must
+  be null; title/date/status/notes/time remain available.
+- Existing strength invariants still prevent converting a templated or
+  set-backed Strength workout to a different activity.
+- Rest Day CRUD, rescheduling, and deletion use the existing workouts table
+  and owner-only permissions. No RLS or grants are relaxed.
+- Rest days are excluded from weekly/overall completed-workout statistics;
+  Running-only mileage and weighted average pace remain unchanged.
+- A date-only reschedule preserves the local time and all other fields.
+
+Shared reads use the table's available columns, so old untimed records still
+load before 006 is applied. Untouched time fields are omitted from legacy
+writes; attempts to save a time without the new column show a specific
+migration-006 error. The UI never invents a Rest Day activity if the seed is
+missing. Migration 006 notifies PostgREST to refresh its schema cache.
+
+Local verification includes repeat-run safety, owner isolation, rest-day CRUD,
+minute/time constraints, rejected training measurements, unchanged RLS,
+time preservation on rescheduling and strength attachment, and stable date/time
+values under Los Angeles and Auckland database timezones.
+
+## 11. Planned tables — not implemented
 
 The following remain future features from `PLAN.md`:
 
