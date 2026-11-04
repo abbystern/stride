@@ -41,4 +41,5 @@ grant usage on schema auth to anon, authenticated;
 SQL
 "${psql_command[@]}" -f supabase/migrations/001_auth_users.sql
 "${psql_command[@]}" -f supabase/tests/002_workout_database.sql
-echo "PASS: workout migration, repeat-run safety, constraints, permissions, and RLS."
+"${psql_command[@]}" -f supabase/tests/003_stars.sql
+echo "PASS: workout and stars migrations, repeat-run safety, constraints, permissions, cascades, and RLS."

@@ -4,18 +4,22 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { useWorkout, useWorkoutMutations } from "../../hooks/useWorkouts";
 import { formatWorkoutDate, WORKOUT_STATUSES } from "../../lib/workoutModel";
 import { WorkoutLayout } from "../../components/workouts/WorkoutLayout";
+import { StarButton } from "../../components/workouts/StarButton";
+import { useStars } from "../../providers/StarsProvider";
 
 export default function WorkoutDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { workout, loading, error, reload } = useWorkout(id);
   const { pending, error: deleteError, clearError, deleteWorkout } = useWorkoutMutations();
+  const { forgetWorkout } = useStars();
   const [confirming, setConfirming] = useState(false);
 
   async function confirmDelete() {
     clearError();
     try {
       await deleteWorkout(id);
+      forgetWorkout(id);
       navigate("/app/workouts", { replace: true });
     } catch {
       // Keep the confirmation visible so the user can retry or cancel.
@@ -68,6 +72,7 @@ export default function WorkoutDetailPage() {
                 )}
               </div>
               <div className="workout-detail-actions">
+                <StarButton workoutId={workout.id} title={workout.title} />
                 <Link to={`/app/workouts/${workout.id}/edit`} className="workout-secondary"><Pencil size={15} aria-hidden="true" /> Edit workout</Link>
                 <button type="button" className="workout-danger" onClick={() => { setConfirming(true); clearError(); }} disabled={pending}>
                   <Trash2 size={15} aria-hidden="true" /> Delete

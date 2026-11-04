@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Plus } from "lucide-react";
 import { useWorkouts } from "../../hooks/useWorkouts";
-import { formatWorkoutDate, WORKOUT_STATUSES } from "../../lib/workoutModel";
 import { WorkoutLayout } from "../../components/workouts/WorkoutLayout";
+import { WorkoutList } from "../../components/workouts/WorkoutList";
 
 export default function WorkoutHistoryPage() {
   const { workouts, loading, error, reload } = useWorkouts();
@@ -34,32 +34,10 @@ export default function WorkoutHistoryPage() {
             <Link to="/app/workouts/new" className="workout-action"><Plus size={16} aria-hidden="true" /> Log your first workout</Link>
           </section>
         ) : (
-          <div className="workout-list">
-            {workouts.map((workout) => {
-              const status = WORKOUT_STATUSES.find((item) => item.value === workout.status);
-              return (
-                <article className="workout-row" key={workout.id}>
-                  <Link to={`/app/workouts/${workout.id}`} className="workout-row-link" aria-label={`Open ${workout.title}, ${formatWorkoutDate(workout.date)}`}>
-                    <h2 className="workout-row-title">{workout.title}</h2>
-                    <div className="workout-row-meta">
-                      <span>{formatWorkoutDate(workout.date)}</span>
-                      <span>{workout.workout_type?.name ?? "Activity"}</span>
-                    </div>
-                    {(workout.distance_miles !== null || workout.duration_minutes !== null) && (
-                      <div className="workout-row-measures">
-                        {workout.distance_miles !== null && <span>{workout.distance_miles} mi</span>}
-                        {workout.duration_minutes !== null && <span>{workout.duration_minutes} min</span>}
-                      </div>
-                    )}
-                  </Link>
-                  <span className="status-pill" data-status={workout.status}>{status?.label ?? workout.status}</span>
-                </article>
-              );
-            })}
-          </div>
+          <WorkoutList workouts={workouts} />
         )}
         {!loading && !error && workouts.length > 0 && (
-          <p className="workout-row-meta" style={{ justifyContent: "flex-end", marginTop: 18 }}>
+          <p className="workout-row-meta workout-count">
             {workouts.length} {workouts.length === 1 ? "workout" : "workouts"} <ArrowRight size={14} aria-hidden="true" />
           </p>
         )}
