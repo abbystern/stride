@@ -320,7 +320,7 @@ test("unavailable and other-user workout IDs show no private details or controls
 
 test("all workout routes redirect signed-out visitors without bypassing auth", async ({ page }) => {
   await backend(page, false);
-  for (const path of ["/app/workouts", "/app/stars", "/app/workouts/new", "/app/workouts/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/edit"]) {
+  for (const path of ["/app/dashboard", "/app/workouts", "/app/stars", "/app/workouts/new", "/app/workouts/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/edit"]) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
@@ -533,5 +533,123 @@ test("search/filter: activity load errors allow other controls and can retry wit
   await expect(page.getByLabel("Search workouts", { exact: true })).toHaveValue("tempo");
   await page.getByLabel("Activity type", { exact: true }).selectOption(activities[0].id);
   await expect(page.locator(".workout-row-title")).toHaveText(["Morning TEMPO"]);
+  expect(state.pageErrors).toEqual([]);
+});
+
+test("dashboard: real calculations, six weekly totals, owner isolation and responsive Recharts rendering", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-11-04T12:00:00Z"));
+  const state = await backend(page);
+  const rows = [
+    { distance_miles: 4, duration_minutes: 32 },
+    { distance_miles: 5, duration_minutes: 50 },
+    { distance_miles: 6, duration_minutes: 54 },
+    { distance_miles: 8, status: "planned" },
+    { distance_miles: 10, status: "in_progress" },
+    { workout_type_id: activities[2].id, distance_miles: 100 },
+    { workout_type_id: activities[6].id, distance_miles: 5 },
+    { workout_type_id: activities[1].id, distance_miles: null },
+    { date: "2026-10-26", distance_miles: 60 },
+    { date: "2026-09-27", distance_miles: 100 },
+    { user_id: otherOwner, distance_miles: 999 },
+  ];
+  state.rows.push(...rows.map((fields) => record({ id: crypto.randomUUID(), status: "completed", ...fields })));
+  await page.getByRole("link", { name: "Training dashboard", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Training dashboard", exact: true })).toBeVisible();
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("15.0");
+  await expect(page.getByTestId("completed-workouts")).toHaveText("6");
+  await expect(page.getByTestId("average-pace")).toHaveText("9:04");
+  await expect(page.locator(".dashboard-chart-wrap .recharts-surface")).toBeVisible();
+  await page.getByText("View weekly mileage as a table", { exact: true }).click();
+  const table = page.getByRole("table", { name: "Weekly completed running mileage" });
+  await expect(table.getByRole("row")).toHaveCount(7);
+  await expect(table.locator("tbody tr td:last-child")).toHaveText(["0.0 mi", "0.0 mi", "0.0 mi", "0.0 mi", "60.0 mi", "15.0 mi"]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: test.info().outputPath("dashboard.png"), fullPage: true });
+  expect(state.pageErrors).toEqual([]);
+});
+
+test("dashboard: empty and planned-only states have zeros and unavailable pace", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-11-04T12:00:00Z"));
+  const state = await backend(page);
+  await page.goto("/app/dashboard");
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("0.0");
+  await expect(page.getByTestId("completed-workouts")).toHaveText("0");
+  await expect(page.getByTestId("average-pace")).toHaveText("—");
+  await expect(page.getByRole("link", { name: "Log your first workout", exact: true })).toBeVisible();
+  state.rows.push(record({ distance_miles: 8, status: "planned" }));
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(page.getByText("No completed running mileage in this six-week view.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Log your first workout", exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("0.0");
+  await expect(page.getByTestId("completed-workouts")).toHaveText("0");
+  await expect(page.getByTestId("average-pace")).toHaveText("—");
+  expect(state.pageErrors).toEqual([]);
+});
+
+test("dashboard: reload, focus, change events and polling fetch fresh owner-scoped records", async ({ page }) => {
+  await page.clock.install({ time: new Date("2026-11-04T12:00:00Z") });
+  const state = await backend(page);
+  state.rows.push(record({ distance_miles: 4, status: "completed" }));
+  await page.goto("/app/dashboard");
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("4.0");
+  state.rows[0].distance_miles = 6;
+  await page.reload();
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("6.0");
+  state.rows[0].distance_miles = 7;
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("7.0");
+  state.rows[0].distance_miles = 8;
+  await page.evaluate(() => window.dispatchEvent(new Event("stride:workouts-changed")));
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("8.0");
+  state.rows[0].distance_miles = 9;
+  await page.clock.fastForward(60_000);
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("9.0");
+  expect(state.pageErrors).toEqual([]);
+});
+
+test("dashboard: create, edit, and delete workouts update totals on return", async ({ page }) => {
+  test.setTimeout(90000);
+  await page.clock.setFixedTime(new Date("2026-11-04T12:00:00Z"));
+  const state = await backend(page);
+  state.rows.push(record({ distance_miles: 4, status: "completed" }));
+  await page.goto("/app/dashboard");
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("4.0");
+  await page.getByRole("link", { name: "New workout", exact: true }).click();
+  await fillBasics(page, "Dashboard test run");
+  await page.getByLabel(/^Status/).selectOption("completed");
+  await page.getByLabel("Distance (miles)").fill("3");
+  await page.getByRole("button", { name: "Save workout", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Dashboard test run", exact: true })).toBeVisible();
+  const detailPath = new URL(page.url()).pathname;
+  await page.getByRole("link", { name: "Dashboard", exact: true }).click();
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("7.0");
+  await page.goto(`${detailPath}/edit`);
+  await page.getByLabel("Distance (miles)").fill("5");
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Dashboard test run", exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Dashboard", exact: true }).click();
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("9.0");
+  await page.goto(detailPath);
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.getByRole("button", { name: "Delete workout", exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/workouts$/);
+  await page.getByRole("link", { name: "Dashboard", exact: true }).click();
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("4.0");
+  expect(state.pageErrors).toEqual([]);
+});
+
+test("dashboard: loading failure does not fabricate totals and retry restores data", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-11-04T12:00:00Z"));
+  const state = await backend(page);
+  state.rows.push(record({ distance_miles: 4, status: "completed" }));
+  state.failRead = true;
+  await page.goto("/app/dashboard");
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByTestId("weekly-mileage")).toHaveCount(0);
+  await expect(page.getByTestId("completed-workouts")).toHaveCount(0);
+  await expect(page.getByTestId("average-pace")).toHaveCount(0);
+  state.failRead = false;
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("4.0");
   expect(state.pageErrors).toEqual([]);
 });

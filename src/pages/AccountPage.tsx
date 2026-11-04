@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { LogOut, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen, Plus, ChartNoAxesColumnIncreasing } from "lucide-react";
 import { BrandMark } from "../components/BrandMark";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../providers/AuthProvider";
@@ -60,6 +60,7 @@ export default function AccountPage() {
         <div className="home-nav-block">
           <p>Your training journal</p>
           <div className="home-nav-actions">
+            <Link to="/app/dashboard"><ChartNoAxesColumnIncreasing size={15} aria-hidden="true" /> Training dashboard</Link>
             <Link to="/app/workouts"><BookOpen size={15} aria-hidden="true" /> Workout history</Link>
             <Link to="/app/stars"><Star size={15} aria-hidden="true" /> Starred workouts</Link>
             <Link to="/app/workouts/new"><Plus size={15} aria-hidden="true" /> Log a workout</Link>

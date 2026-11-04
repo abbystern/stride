@@ -1,4 +1,5 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { useAuth } from "./providers/AuthProvider";
 import {
   hasSupabaseConfig,
@@ -14,6 +15,8 @@ import EditWorkoutPage from "./pages/workouts/EditWorkoutPage";
 import StarredWorkoutsPage from "./pages/workouts/StarredWorkoutsPage";
 import { StarsProvider } from "./providers/StarsProvider";
 import "./workouts.css";
+
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 
 function LoadingScreen() {
   return (
@@ -67,6 +70,7 @@ export default function App() {
       <Route path="/signup" element={<AuthPage mode="signup" />} />
       <Route path="/app" element={<ProtectedRoute />}>
         <Route index element={<AccountPage />} />
+        <Route path="dashboard" element={<Suspense fallback={<LoadingScreen />}><DashboardPage /></Suspense>} />
         <Route path="stars" element={<StarredWorkoutsPage />} />
         <Route path="workouts" element={<WorkoutHistoryPage />} />
         <Route path="workouts/new" element={<NewWorkoutPage />} />
