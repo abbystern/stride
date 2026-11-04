@@ -10,6 +10,7 @@
     "test:workout-filters": "node --experimental-strip-types --test tests/workout-filters.test.ts",
     "test:dashboard": "node --experimental-strip-types --test tests/dashboard.test.ts",
     "test:calendar": "node --experimental-strip-types --test tests/calendar.test.ts",
+    "test:strength": "node --experimental-strip-types --test tests/strength.test.ts",
     "test:workout-ui": "playwright test"
   },
   "repository": {

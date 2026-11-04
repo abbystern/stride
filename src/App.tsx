@@ -18,6 +18,8 @@ import "./workouts.css";
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const TrainingCalendarPage = lazy(() => import("./pages/TrainingCalendarPage"));
+const StrengthTemplatesPage = lazy(() => import("./pages/strength/StrengthTemplatesPage"));
+const StrengthSessionPage = lazy(() => import("./pages/strength/StrengthSessionPage"));
 
 function LoadingScreen() {
   return (
@@ -73,9 +75,11 @@ export default function App() {
         <Route index element={<AccountPage />} />
         <Route path="dashboard" element={<Suspense fallback={<LoadingScreen />}><DashboardPage /></Suspense>} />
         <Route path="calendar" element={<Suspense fallback={<LoadingScreen />}><TrainingCalendarPage /></Suspense>} />
+        <Route path="strength" element={<Suspense fallback={<LoadingScreen />}><StrengthTemplatesPage /></Suspense>} />
         <Route path="stars" element={<StarredWorkoutsPage />} />
         <Route path="workouts" element={<WorkoutHistoryPage />} />
         <Route path="workouts/new" element={<NewWorkoutPage />} />
+        <Route path="workouts/:id/strength" element={<Suspense fallback={<LoadingScreen />}><StrengthSessionPage /></Suspense>} />
         <Route path="workouts/:id" element={<WorkoutDetailPage />} />
         <Route path="workouts/:id/edit" element={<EditWorkoutPage />} />
       </Route>

@@ -10,6 +10,7 @@
 | `public.workouts` | Defined and locally tested in `002_workout_database.sql` | User confirmed real CRUD and persistence in Feature 3 |
 | `public.stars` | Defined in `003_stars.sql`, with local security tests | User confirmed Feature 5 is working; remote schema not independently inspected |
 | `public.weekly_goals` | Defined and locally tested in `004_training_calendar.sql` | Run this migration manually in Supabase; remote application is not verified |
+| Strength templates, exercises, template exercises, workout sets | Defined and locally tested in `005_strength_tracker.sql` | Apply migration 005 manually; remote application has not been verified |
 
 Authentication and workout logging/validation are implemented. Feature 5 adds
 private favorites and a Starred Workouts page. The dashboard and training
@@ -72,6 +73,7 @@ Source: `supabase/migrations/002_workout_database.sql`.
 | `id` | `uuid` | Required; `gen_random_uuid()` | Primary key |
 | `user_id` | `uuid` | Required; `auth.uid()` | FK to `public.users.id`, `ON DELETE CASCADE` |
 | `workout_type_id` | `uuid` | Required | FK to `public.workout_types.id`, `ON DELETE RESTRICT` |
+| `template_id` | `uuid` | Optional; migration 005 | Composite owner-matching FK to `workout_templates(id, user_id)` |
 | `date` | `date` | Required; `current_date` | Workout's planned or actual calendar date |
 | `title` | `text` | Required | Must contain a non-whitespace character |
 | `status` | `text` | Required; `'planned'` | Exactly `planned`, `in_progress`, or `completed` |
@@ -98,7 +100,7 @@ Indexes:
 | --- | --- |
 | Running | Date, status, distance, duration, target pace, elevation gain, run type, notes |
 | Walking / Hiking | Separate activity types; optional distance, duration, elevation gain, notes |
-| Strength Training | Planned, in-progress, or completed session; exercises, sets, reps, and weights deferred |
+| Strength Training | Existing workout record with optional template, captured exercise targets, actual set weights/reps, completion, and prior-performance comparison |
 | Cycling | Date, duration, status, notes, and optional distance |
 | Pilates / Physical Therapy / Other | Date, duration, status, notes |
 
@@ -365,19 +367,119 @@ activities never contribute, and invalid distances are excluded.
    anonymous and identity-less denial, cross-owner date updates, and cascades.
    It does not connect to or modify remote Supabase.
 
-## 9. Planned tables — not implemented
+## 9. Strength templates, session sets, and previous performance
+
+Migration: `supabase/migrations/005_strength_tracker.sql`. Migrations 001–004
+are unchanged. Apply 005 manually in the existing Supabase SQL Editor after
+001–004, then reload **Strength**. The agent's database verification uses
+disposable local PostgreSQL, not the remote project.
+
+### `public.workout_templates`
+
+`id uuid` PK; `user_id uuid` required FK to `public.users` with cascade;
+`name text` required, trimmed length 1–120; `workout_type_id uuid` required FK
+to shared activity types. A trigger restricts templates to **Strength Training**.
+Unique `(id, user_id)` supports composite owner-matching child references.
+
+### `public.exercises`
+
+`id uuid` PK; `user_id uuid` required FK to profiles with cascade; `name text`
+required, trimmed length 1–120; `name_key text` generated as lowercased/trimmed
+name. Unique `(user_id, name_key)` reuses the same exercise identity across
+that user's routines. Unique `(id, user_id)` protects child references. Other
+users have independent exercise identities even for identical names.
+
+### `public.template_exercises`
+
+`id uuid` PK; `user_id uuid` profile FK/cascade; `template_id uuid` and
+`exercise_id uuid` required. Composite `(template_id, user_id)` references
+templates with cascade; `(exercise_id, user_id)` references exercises with a
+deferred FK. `position integer` 1–30; `target_sets integer` 1–20;
+`rep_min integer` 1–1000; `rep_max integer` between rep_min and 1000;
+`notes text` optional, up to 2,000 characters; `optional boolean` defaults false.
+The first UI uses notes and permits partial workout completion; it does not
+add optional-exercise scheduling algorithms.
+
+Unique `(template_id, position)` and `(template_id, exercise_id)` keep order
+unambiguous and permit each exercise once per routine.
+
+### `public.workout_sets`
+
+`id uuid` PK; `user_id uuid` profile FK/cascade; `workout_id uuid` and
+`exercise_id uuid` required. Owner-matching composite FKs reference workouts
+(cascade) and exercises (deferred).
+
+- `set_number integer`: 1–20; unique with `(workout_id, exercise_id)`.
+- `reps integer`: nullable; whole number 0–1000.
+- `weight_lbs numeric`: nullable; finite, nonnegative; zero supports unweighted
+  or bodyweight entries.
+- `completed boolean`: required, defaults false. Completed sets require a
+  non-null weight and positive reps.
+- Session snapshots: `exercise_name`, `position`, `target_sets`, `rep_min`,
+  `rep_max`, and `notes`, with the same text/count/range bounds as templates.
+  A trigger requires the parent to be the user's templated Strength workout.
+
+Snapshot rows are initialized once per session. Later template edits do not
+rewrite historical names, ordering, targets, notes, or actual logged results.
+
+### Existing workout integration and deletion
+
+Migration 005 adds nullable `workouts.template_id`, a unique `(id, user_id)`
+index, and a deferred owner-matching template FK. Existing workout records,
+calendar dates, auth, favorite relationships, and running totals are retained.
+Starting from a routine creates a normal `in_progress` Strength workout;
+applying a routine to an existing unfinished Strength workout retains its ID,
+title, scheduled date, and notes. Templated/set-backed workouts cannot change
+to a non-strength activity.
+
+Deleting a workout cascades its sets. Deleting a profile cascades all its
+strength records without affecting another user. Referenced exercise/template
+identity is protected by FKs; client-side deletion of templates, exercises,
+or individual sets is not part of this first interface.
+
+### RLS, privileges, and atomic functions
+
+All four tables have RLS enabled and anonymous/public access revoked.
+Authenticated clients can SELECT/INSERT/UPDATE their own rows;
+`template_exercises` additionally permits owner-only DELETE for atomic edits.
+Child SELECT/INSERT/UPDATE policies verify the parent workout/template and
+exercise also belong to the authenticated user. Composite FKs independently
+reject cross-owner references. Updates cannot transfer ownership.
+
+The following functions are **SECURITY INVOKER**, with empty search paths,
+authenticated-only execution, and caller RLS still active:
+
+- `save_strength_template`: validates and atomically replaces a routine's
+  ordered exercise definitions, reusing normalized exercise identities.
+- `start_strength_workout`: locks the template, creates/attaches one existing
+  workout record, and snapshots all target sets atomically. It never resets
+  an already initialized session.
+- `save_strength_progress`: saves a batch of actual weights/reps/completion
+  flags atomically. A failed row rolls back the entire batch. Finishing also
+  changes the existing workout to completed in that transaction and requires
+  at least one completed set; unfinished sets remain uncompleted.
+- `previous_strength_performance`: returns each exercise's most recent
+  earlier completed session's completed sets, ordered by workout date and
+  creation time. Current, future, in-progress, uncompleted-set, and other-user
+  records do not become previous performance.
+
+Limits of 30 exercises × 20 sets bound each session to 600 rows. Loads of
+templates/sets use pagination; prior-performance results are aggregated into
+a scalar JSON response so row limits do not silently discard previous sets.
+
+Local verification: `bash scripts/test-workout-database.sh` exercises real
+PostgreSQL constraints, RLS, RPCs, rollbacks, snapshot preservation, identity
+reuse, scheduled-workout attachment, prior results, reruns, and cascades.
+
+## 10. Planned tables — not implemented
 
 The following remain future features from `PLAN.md`:
 
-- `workout_templates`
-- `exercises`
-- `template_exercises`
-- `workout_sets`
 - `nutrition_entries`
 - `nutrition_goals`
 - `recovery_entries`
 
-`workouts.template_id` is also deferred until the template feature. Workout
-logging, favorites, the dashboard, and the simple weekly calendar are
-implemented. Templates/recommendations, nutrition/recovery tables, analytics,
-and external integrations remain deferred.
+Workout logging, favorites, the dashboard, the weekly calendar, and strength
+templates/set tracking are implemented. Running recommendations, advanced
+progression charts, nutrition/recovery, analytics, and external integrations
+remain deferred.

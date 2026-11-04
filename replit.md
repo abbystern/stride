@@ -74,4 +74,17 @@
   required test, genuine failing/passing screenshot instructions, and manual
   checks. No new database migration is required.
 
-Weekly planning, lifting templates, nutrition, and recovery are intentionally not included.
+## Strength tracker
+
+- `/app/strength` manages routines; `/app/workouts/:id/strength` logs or reviews
+  sets on existing workout records. Apply migration 005 manually in Supabase.
+- Sessions snapshot targets. Explicit Save progress persists weights/reps and
+  completion; Finish saves and completes atomically, allowing unfinished sets
+  to remain uncompleted. Previous performance uses earlier completed sessions.
+- All four strength tables are private. Child policies and composite FKs check
+  parent ownership; RPCs remain SECURITY INVOKER. Never bypass RLS in the client.
+- Existing migrations are immutable. See `schema.md` and
+  `prompts/strength-tracker.md` for migration and testing instructions.
+
+Nutrition, recovery, external wearable imports, automatic recommendations,
+and advanced progression charts remain intentionally excluded.

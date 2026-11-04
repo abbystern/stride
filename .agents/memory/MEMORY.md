@@ -1,2 +1,3 @@
 - [Supabase URL diagnostics](supabase-url-diagnostics.md) — absolute-path health checks can hide a misconfigured SDK base URL; verify the SDK-generated request path.
 - [Browser test runtime](browser-test-runtime.md) — on Replit/Nix, prefer the available system browser over stock Playwright downloads.
+- [Supabase migration rollout](supabase-migration-rollout.md) — isolate new schema dependencies until manually applied SQL is available; keep established routes working.

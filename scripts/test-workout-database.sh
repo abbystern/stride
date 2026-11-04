@@ -43,4 +43,5 @@ SQL
 "${psql_command[@]}" -f supabase/tests/002_workout_database.sql
 "${psql_command[@]}" -f supabase/tests/003_stars.sql
 "${psql_command[@]}" -f supabase/tests/004_training_calendar.sql
-echo "PASS: workout, stars, and weekly-goal migrations, repeat-run safety, constraints, permissions, cascades, and RLS."
+"${psql_command[@]}" -f supabase/tests/005_strength_tracker.sql
+echo "PASS: workouts, stars, weekly goals, and strength: migrations, RPCs, atomic saves, snapshots, history, constraints, cascades, and RLS."
