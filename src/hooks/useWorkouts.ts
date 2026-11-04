@@ -6,6 +6,7 @@ import {
   listWorkouts,
   listWorkoutTypes,
   removeWorkout,
+  rescheduleWorkout as moveWorkout,
   saveWorkout,
   workoutErrorMessage,
 } from "../lib/workouts";
@@ -107,5 +108,6 @@ export function useWorkoutMutations() {
     createWorkout: (payload: WorkoutPayload) => mutate((userId) => insertWorkout(payload, userId)),
     updateWorkout: (id: string, payload: WorkoutPayload) => mutate((userId) => saveWorkout(id, payload, userId)),
     deleteWorkout: (id: string) => mutate((userId) => removeWorkout(id, userId)),
+    rescheduleWorkout: (id: string, date: string) => mutate((userId) => moveWorkout(id, date, userId)),
   };
 }

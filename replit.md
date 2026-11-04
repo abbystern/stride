@@ -55,6 +55,12 @@
 - Feature 7 is available at `/app/dashboard` via home actions and main navigation.
 - This week and Overall sections show matching metrics for the local calendar
   week and all dates respectively; the chart remains a six-week view.
+- The simple `/app/calendar` uses existing workout dates and per-Monday weekly
+  goals; run migration 004 in Supabase before saving goals. Scheduled running
+  mileage is planned/in-progress only, completed running mileage is separate.
+- The calendar's first version intentionally excludes drag-and-drop, AI
+  recommendations, Garmin imports, and complex scheduling; PLAN.md describes a
+  broader future planner, not the scope of this first version.
 - `calculateDashboard` is independent of Supabase and uses local Monday–Sunday
   calendar weeks. All three cards cover the current week; the Recharts view
   includes that week and the five preceding weeks.

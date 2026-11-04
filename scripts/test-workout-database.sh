@@ -42,4 +42,5 @@ SQL
 "${psql_command[@]}" -f supabase/migrations/001_auth_users.sql
 "${psql_command[@]}" -f supabase/tests/002_workout_database.sql
 "${psql_command[@]}" -f supabase/tests/003_stars.sql
-echo "PASS: workout and stars migrations, repeat-run safety, constraints, permissions, cascades, and RLS."
+"${psql_command[@]}" -f supabase/tests/004_training_calendar.sql
+echo "PASS: workout, stars, and weekly-goal migrations, repeat-run safety, constraints, permissions, cascades, and RLS."

@@ -17,6 +17,7 @@ import { StarsProvider } from "./providers/StarsProvider";
 import "./workouts.css";
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const TrainingCalendarPage = lazy(() => import("./pages/TrainingCalendarPage"));
 
 function LoadingScreen() {
   return (
@@ -71,6 +72,7 @@ export default function App() {
       <Route path="/app" element={<ProtectedRoute />}>
         <Route index element={<AccountPage />} />
         <Route path="dashboard" element={<Suspense fallback={<LoadingScreen />}><DashboardPage /></Suspense>} />
+        <Route path="calendar" element={<Suspense fallback={<LoadingScreen />}><TrainingCalendarPage /></Suspense>} />
         <Route path="stars" element={<StarredWorkoutsPage />} />
         <Route path="workouts" element={<WorkoutHistoryPage />} />
         <Route path="workouts/new" element={<NewWorkoutPage />} />
