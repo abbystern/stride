@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "D9aVw5AQo42MNa2f69oxa"
+uri = "file://docs/test-evidence/data-isolation-fail.png"
+type = "image"
+title = "Screenshot 1 — Data isolation failure"
+description = "Real PostgreSQL test output captured in a read-only log viewer. The intentional temporary local policy defect lets User B read one private row; expected zero. No hosted security changes."
+logical_id = "fefcc410-b0af-492c-b446-08ecb8ced24e"
+content_hash = "sha256:a1a1880af5241e71b84650a98809540aafd76383f2e447de5ee577025432974b"
+size = 104064
+mtime_ms = 1793831534216
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/fefcc410-b0af-492c-b446-08ecb8ced24e/ddca54c8-9f69-492c-b45b-9b3ed70a8410"
+storage_version_token = "1793831571035841"
+content_type = "image/png"

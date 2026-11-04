@@ -14,10 +14,15 @@ function run(distance: number | null, overrides: Partial<DashboardWorkout> = {})
 }
 
 test("required dashboard test: completed runs of 4 + 5 + 6 miles, excluding a planned 8-mile run, total 15 miles", () => {
-  const workouts = [run(4), run(5), run(6), run(8, { status: "planned" })];
+  const workouts = [
+    run(4), run(5), run(6), run(8, { status: "planned" }),
+    run(2, { workout_type: { id: "walking", name: "Walking" } }),
+    run(10, { workout_type: { id: "cycling", name: "Cycling" } }),
+  ];
   const dashboard = calculateDashboard(workouts, wednesday);
   assert.equal(dashboard.weeklyMileage, 15);
   assert.equal(dashboard.weeks[5].miles, 15);
+  assert.equal(dashboard.overall.runningMileage, 15);
 });
 
 test("only completed Running contributes mileage; completed counts include all activities", () => {
