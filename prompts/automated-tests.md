@@ -195,5 +195,25 @@ When you're finished, give me:
 - Screenshot 4 generated: `docs/test-evidence/dashboard-pass.png`,
   with its actual-output `.txt` transcript. The real, unmodified dashboard
   function passed the 15-mile assertion, with test exit code 0.
-  Paused for user confirmation before final full-suite/build verification
-  and commit/push.
+  User confirmed screenshot 4 was captured before final verification began.
+
+## Final verification
+
+- Both required tests passed again after all four screenshot confirmations.
+- All **51** unit tests passed.
+- The complete local database suite for this branch passed, including
+  migrations, workout/star/goal/strength behavior, validation, and RLS.
+- Production build passed; the existing Vite large-chunk advisory is nonblocking.
+- All four PNGs and actual-output transcripts exist. No temporary dashboard
+  mutation directory remains, and hosted security was never changed.
+- All **70 desktop/mobile browser tests passed** in the completed background
+  run (3.9 minutes, exit code 0). The initial foreground attempt had exceeded
+  its shell time limit after passing 20 checks, without a test failure.
+- Compared production source and migrations with the pre-test baseline:
+  unchanged. All intentional defects are confined to temporary test-only
+  resources and have been cleaned up.
+- Reviewed changed paths for `.env` files and recognized password/secret
+  literals: none found. Evidence contains only synthetic fixture data.
+- No hosted migrations, production security changes, or new app features
+  were required. All four screenshot checkpoints were confirmed by the user
+  before final verification and commit/push on `test/automated-tests`.
