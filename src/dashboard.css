@@ -23,7 +23,7 @@
 
 .dashboard-heading p {
   margin: 0;
-  color: #777f76;
+  color: #666b73;
   font-size: 14px;
   line-height: 1.65;
 }
@@ -39,7 +39,7 @@
   border: 1px solid #dfe4db;
   border-radius: 8px;
   background: #fffefa;
-  color: #526254;
+  color: #345cff;
   cursor: pointer;
   font: inherit;
   font-size: 12px;
@@ -47,8 +47,9 @@
 }
 
 .dashboard-retry:hover:not(:disabled) {
-  border-color: #bdcbb9;
-  background: #f4f6f1;
+  border-color: #345cff;
+  background: #e9edff;
+  color: #2447dc;
 }
 
 .dashboard-retry:disabled {
@@ -69,11 +70,11 @@
   padding: 19px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #f8f9f5;
+  background: #faf9f5;
 }
 
 .dashboard-period--overall {
-  background: #f5f7f1;
+  background: #f2f0e9;
 }
 
 .dashboard-period-heading {
@@ -87,7 +88,7 @@
 .dashboard-period-kicker {
   display: block;
   margin-bottom: 5px;
-  color: #879084;
+  color: #626a76;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: .1em;
@@ -95,7 +96,7 @@
 
 .dashboard-period-heading h2 {
   margin: 0;
-  color: #3e473f;
+  color: #22252a;
   font-family: var(--serif);
   font-size: 23px;
   font-weight: 600;
@@ -105,7 +106,7 @@
 
 .dashboard-period-heading p {
   margin: 5px 0 0;
-  color: #7a8179;
+  color: #626872;
   font-size: 11px;
   line-height: 1.5;
 }
@@ -142,7 +143,7 @@
 .dashboard-metric-label {
   display: block;
   margin-bottom: 14px;
-  color: #788076;
+  color: #606670;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .095em;
@@ -156,13 +157,17 @@
 
 .dashboard-metric-value {
   display: block;
-  color: #384039;
+  color: #22252a;
   font-family: var(--serif);
   font-size: clamp(28px, 4vw, 35px);
   font-weight: 600;
   letter-spacing: -1.1px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+}
+
+.dashboard-metric:first-child .dashboard-metric-value {
+  color: #345cff;
 }
 
 .dashboard-period .dashboard-metric-value {
@@ -187,7 +192,7 @@
 .dashboard-metric-unit {
   display: block;
   margin-top: 9px;
-  color: #838a80;
+  color: #626872;
   font-size: 11px;
   line-height: 1.5;
 }
@@ -202,13 +207,7 @@
   width: 88px;
   height: 34px;
   border-radius: 6px;
-  background: linear-gradient(90deg, #e9ede6, #f1f3ee, #e9ede6);
-  background-size: 200% 100%;
-  animation: dashboard-shimmer 1.6s ease-in-out infinite;
-}
-
-@keyframes dashboard-shimmer {
-  to { background-position: -200% 0; }
+  background: #e9e8e2;
 }
 
 .dashboard-panel {
@@ -228,7 +227,7 @@
 
 .dashboard-panel-heading h2 {
   margin: 0 0 5px;
-  color: #3e473f;
+  color: #22252a;
   font-family: var(--serif);
   font-size: 21px;
   font-weight: 600;
@@ -237,7 +236,7 @@
 
 .dashboard-panel-heading p {
   margin: 0;
-  color: #7a8179;
+  color: #626872;
   font-size: 12px;
   line-height: 1.6;
 }
@@ -253,13 +252,13 @@
 }
 
 .dashboard-chart .recharts-cartesian-axis-tick-value {
-  fill: #7c847a;
+  fill: #626872;
   font-family: inherit;
   font-size: 10px;
 }
 
 .dashboard-chart .recharts-cartesian-grid-horizontal line {
-  stroke: #edf0e9;
+  stroke: #e7e5df;
   stroke-dasharray: 2 4;
 }
 
@@ -275,12 +274,12 @@
 .dashboard-tooltip-date {
   display: block;
   margin-bottom: 6px;
-  color: #777f76;
+  color: #626872;
   font-size: 10px;
 }
 
 .dashboard-tooltip-value {
-  color: #506a53;
+  color: #345cff;
   font-size: 13px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -288,7 +287,7 @@
 
 .dashboard-note {
   margin: 12px 0 0;
-  color: #788076;
+  color: #606670;
   font-size: 12px;
   line-height: 1.6;
 }
@@ -309,7 +308,7 @@
 
 .dashboard-note a,
 .dashboard-empty a {
-  color: #526b54;
+  color: #2447dc;
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -342,7 +341,7 @@
 .dashboard-table-details summary {
   width: fit-content;
   padding: 14px 0 2px;
-  color: #617161;
+  color: #2447dc;
   cursor: pointer;
   font-size: 11px;
   font-weight: 600;
@@ -368,7 +367,7 @@
 }
 
 .dashboard-table th {
-  color: #81887e;
+  color: #666b73;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .06em;
@@ -384,7 +383,7 @@
 .dashboard-loading-chart {
   height: 255px;
   border-radius: 8px;
-  background: linear-gradient(180deg, transparent 0 25%, #f1f3ee 25% 26%, transparent 26% 52%, #f1f3ee 52% 53%, transparent 53% 78%, #f1f3ee 78% 79%, transparent 79%);
+  background: #f1f0eb;
 }
 
 @media (max-width: 680px) {
@@ -462,11 +461,5 @@
 
   .dashboard-chart-wrap {
     height: 255px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dashboard-skeleton {
-    animation: none;
   }
 }
