@@ -279,11 +279,17 @@ export default function TrainingCalendarPage() {
                   ) : day.workouts.map((workout) => {
                     const feedback = moveMessages[workout.id];
                     const isOpen = openReschedule === workout.id;
+                    const distanceMiles = workout.distance_miles;
+                    const showDistance = workout.workout_type?.name !== "Rest Day" &&
+                      typeof distanceMiles === "number" &&
+                      Number.isFinite(distanceMiles) &&
+                      distanceMiles >= 0;
                     return (
                       <article className={`calendar-workout calendar-workout--${workout.status}${workout.workout_type?.name === "Rest Day" ? " calendar-workout--rest" : ""}`} data-workout-id={workout.id} key={workout.id}>
                         <span className="calendar-workout-type">{workout.workout_type?.name === "Rest Day" ? "Rest Day" : workout.workout_type?.name ?? "Workout"}</span>
                         <Link className="calendar-workout-title" to={`/app/workouts/${workout.id}`}>{workout.title}</Link>
                         <span className="calendar-workout-time">{formatWorkoutTime(workout.scheduled_start_time)}</span>
+                        {showDistance && <span className="calendar-workout-distance">{distanceMiles} mi</span>}
                         <span className={`calendar-status calendar-status--${workout.status}`}>{statusLabel(workout.status)}</span>
                         <div className="calendar-reschedule">
                           <button

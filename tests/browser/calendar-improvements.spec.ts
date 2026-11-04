@@ -8,6 +8,34 @@ const day = (page: Page, date: string) => page.locator(`[data-date="${date}"]`);
 const submit = (page: Page) => page.locator('form button[type="submit"]');
 const startTime = (page: Page) => page.getByLabel("Start time (optional)", { exact: true });
 
+test("calendar mileage: saved distances appear in both views without changing running-only totals", async ({ page }) => {
+  const state = await calendarBackend(page);
+  const rows = [
+    entry({ title: "Easy run", date: "2026-11-04", distance_miles: 3.5 }),
+    entry({ title: "Zero distance", date: "2026-11-04", distance_miles: 0 }),
+    entry({ title: "Walk", date: "2026-11-04", workout_type_id: activities.find((type) => type.name === "Walking")!.id, distance_miles: 2 }),
+    entry({ title: "Lifting", date: "2026-11-04", workout_type_id: activities.find((type) => type.name === "Strength Training")!.id, distance_miles: null }),
+    entry({ title: "Rest", date: "2026-11-04", workout_type_id: activities.find((type) => type.name === "Rest Day")!.id, distance_miles: null }),
+  ];
+  state.rows.push(...rows);
+  await page.goto("/app/calendar?week=2026-11-02");
+  for (const view of ["Week", "Month"]) {
+    await page.getByRole("button", { name: view, exact: true }).click();
+    const cards = rows.map((row) => page.locator(`[data-workout-id="${row.id}"]`));
+    await expect(cards[0].locator(".calendar-workout-distance")).toHaveText("3.5 mi");
+    await expect(cards[1].locator(".calendar-workout-distance")).toHaveText("0 mi");
+    await expect(cards[2].locator(".calendar-workout-distance")).toHaveText("2 mi");
+    await expect(cards[3].locator(".calendar-workout-distance")).toHaveCount(0);
+    await expect(cards[4].locator(".calendar-workout-distance")).toHaveCount(0);
+    await expect(page.getByTestId("scheduled-mileage")).toHaveText("3.5");
+    await expect(page.getByTestId("completed-mileage")).toHaveText("0.0");
+  }
+  await page.getByRole("button", { name: "Week", exact: true }).click();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: test.info().outputPath("calendar-mileage.png"), fullPage: true });
+  expect(state.errors).toEqual([]);
+});
+
 test("calendar improvements: weekly/monthly grid placements, ordered times, goals and navigation", async ({ page }) => {
   const state = await calendarBackend(page);
   const completed = entry({ date: "2026-11-04", title: "Morning five", status: "completed", distance_miles: 5, scheduled_start_time: "06:30:00" });

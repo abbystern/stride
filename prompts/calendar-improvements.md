@@ -226,3 +226,20 @@ Generated screenshots are stored under ignored `generated-artifacts/`.
    a previously scheduled time.
 9. Use a second account to verify private workout/rest-day records cannot be
    accessed or modified. Do not disable RLS.
+
+## Follow-up: distance on calendar cards
+
+User prompt — verbatim:
+
+> I want to see the number of miles in the calendar view
+
+Implementation and verification — summary:
+
+- Both weekly and monthly cards now show the saved distance, such as
+  **3.5 mi**, including valid zero distances.
+- Missing/invalid distances and rest-day mileage remain hidden rather than
+  displaying an invented value. Non-running distances can be displayed without
+  contributing to the running-only weekly summaries.
+- Build passed, and focused desktop/mobile browser tests passed for both
+  views, missing distances, zero, walking, rest days, and unchanged totals.
+- No database change or new migration is required.
