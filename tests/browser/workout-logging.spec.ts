@@ -575,6 +575,9 @@ test("dashboard: empty and planned-only states have zeros and unavailable pace",
   await expect(page.getByTestId("weekly-mileage")).toHaveText("0.0");
   await expect(page.getByTestId("completed-workouts")).toHaveText("0");
   await expect(page.getByTestId("average-pace")).toHaveText("—");
+  await expect(page.getByTestId("overall-mileage")).toHaveText("0.0");
+  await expect(page.getByTestId("overall-completed-workouts")).toHaveText("0");
+  await expect(page.getByTestId("overall-average-pace")).toHaveText("—");
   await expect(page.getByRole("link", { name: "Log your first workout", exact: true })).toBeVisible();
   state.rows.push(record({ distance_miles: 8, status: "planned" }));
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
@@ -623,18 +626,21 @@ test("dashboard: create, edit, and delete workouts update totals on return", asy
   const detailPath = new URL(page.url()).pathname;
   await page.getByRole("link", { name: "Dashboard", exact: true }).click();
   await expect(page.getByTestId("weekly-mileage")).toHaveText("7.0");
+  await expect(page.getByTestId("overall-mileage")).toHaveText("7.0");
   await page.goto(`${detailPath}/edit`);
   await page.getByLabel("Distance (miles)").fill("5");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Dashboard test run", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Dashboard", exact: true }).click();
   await expect(page.getByTestId("weekly-mileage")).toHaveText("9.0");
+  await expect(page.getByTestId("overall-mileage")).toHaveText("9.0");
   await page.goto(detailPath);
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await page.getByRole("button", { name: "Delete workout", exact: true }).click();
   await expect(page).toHaveURL(/\/app\/workouts$/);
   await page.getByRole("link", { name: "Dashboard", exact: true }).click();
   await expect(page.getByTestId("weekly-mileage")).toHaveText("4.0");
+  await expect(page.getByTestId("overall-mileage")).toHaveText("4.0");
   expect(state.pageErrors).toEqual([]);
 });
 
@@ -648,6 +654,9 @@ test("dashboard: loading failure does not fabricate totals and retry restores da
   await expect(page.getByTestId("weekly-mileage")).toHaveCount(0);
   await expect(page.getByTestId("completed-workouts")).toHaveCount(0);
   await expect(page.getByTestId("average-pace")).toHaveCount(0);
+  await expect(page.getByTestId("overall-mileage")).toHaveCount(0);
+  await expect(page.getByTestId("overall-completed-workouts")).toHaveCount(0);
+  await expect(page.getByTestId("overall-average-pace")).toHaveCount(0);
   state.failRead = false;
   await page.getByRole("button", { name: "Try again", exact: true }).click();
   await expect(page.getByTestId("weekly-mileage")).toHaveText("4.0");
@@ -686,5 +695,40 @@ test("dashboard pace regression: walking and planned runs cannot change pace; ag
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
   await expect(page.getByTestId("average-pace")).toHaveText("—");
   await expect(page.getByTestId("pace-calculation")).toHaveCount(0);
+  expect(state.pageErrors).toEqual([]);
+});
+
+test("dashboard: weekly and overall stats stay distinct, private, and fresh after edits", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-11-04T12:00:00Z"));
+  const state = await backend(page);
+  state.rows.push(
+    record({ status: "completed", distance_miles: 5, duration_minutes: 50 }),
+    record({ id: crypto.randomUUID(), date: "2020-01-01", status: "completed", distance_miles: 3, duration_minutes: 27 }),
+    record({ id: crypto.randomUUID(), date: "2020-01-01", workout_type_id: activities[5].id, status: "completed", distance_miles: 2, duration_minutes: 40 }),
+    record({ id: crypto.randomUUID(), date: "2020-01-01", status: "planned", distance_miles: 20, duration_minutes: 40 }),
+    record({ id: crypto.randomUUID(), user_id: otherOwner, status: "completed", distance_miles: 999, duration_minutes: 999 }),
+  );
+  await page.goto("/app/dashboard");
+  await expect(page.getByRole("heading", { name: "This week", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overall", exact: true })).toBeVisible();
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("5.0");
+  await expect(page.getByTestId("completed-workouts")).toHaveText("1");
+  await expect(page.getByTestId("average-pace")).toHaveText("10:00/mi");
+  await expect(page.getByTestId("overall-mileage")).toHaveText("8.0");
+  await expect(page.getByTestId("overall-completed-workouts")).toHaveText("3");
+  await expect(page.getByTestId("overall-average-pace")).toHaveText("9:38/mi");
+  await page.getByText("View weekly mileage as a table", { exact: true }).click();
+  const table = page.getByRole("table", { name: "Weekly completed running mileage" });
+  await expect(table.locator("tbody tr td:last-child")).toHaveText(["0.0 mi", "0.0 mi", "0.0 mi", "0.0 mi", "0.0 mi", "5.0 mi"]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: test.info().outputPath("weekly-overall.png"), fullPage: true });
+  state.rows[1].distance_miles = 4;
+  state.rows[1].duration_minutes = 40;
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("5.0");
+  await expect(page.getByTestId("overall-mileage")).toHaveText("9.0");
+  await expect(page.getByTestId("overall-average-pace")).toHaveText("10:00/mi");
+  await page.reload();
+  await expect(page.getByTestId("overall-mileage")).toHaveText("9.0");
   expect(state.pageErrors).toEqual([]);
 });

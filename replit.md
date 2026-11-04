@@ -53,6 +53,8 @@
 ## Training dashboard
 
 - Feature 7 is available at `/app/dashboard` via home actions and main navigation.
+- This week and Overall sections show matching metrics for the local calendar
+  week and all dates respectively; the chart remains a six-week view.
 - `calculateDashboard` is independent of Supabase and uses local Monday–Sunday
   calendar weeks. All three cards cover the current week; the Recharts view
   includes that week and the five preceding weeks.

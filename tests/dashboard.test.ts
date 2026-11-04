@@ -197,3 +197,63 @@ test("calculation does not modify its input workouts or reference date", () => {
   assert.equal(now.getTime(), wednesday.getTime());
   assert.equal(workouts[0].distance_miles, 4);
 });
+
+test("overall stats include older history without changing weekly totals or the six-week chart", () => {
+  const result = calculateDashboard([
+    run(4, { duration_minutes: 42 }),
+    run(5, { date: "2020-01-01", duration_minutes: 50 }),
+    run(2, { date: "2020-01-01", duration_minutes: 40, workout_type: { id: "walking", name: "Walking" } }),
+    run(3, { date: "2026-10-26", duration_minutes: 27 }),
+    run(2, { date: "2020-01-01", duration_minutes: null }),
+    run(8, { date: "2020-01-01", status: "planned" }),
+    run(9, { status: "in_progress" }),
+  ], wednesday);
+  assert.equal(result.weeklyMileage, 4);
+  assert.equal(result.completedWorkouts, 1);
+  assert.equal(formatRunningPace(result.averagePace), "10:30");
+  assert.equal(result.overall.runningMileage, 14);
+  assert.equal(result.overall.completedWorkouts, 5);
+  assert.equal(result.overall.paceWorkoutCount, 3);
+  assert.equal(result.overall.paceDistanceMiles, 12);
+  assert.equal(result.overall.paceDurationMinutes, 119);
+  assert.equal(formatRunningPace(result.overall.averagePace), "9:55");
+  assert.deepEqual(result.weeks.map((week) => week.miles), [0, 0, 0, 0, 3, 4]);
+});
+
+test("weekly and overall share completed-running eligibility and aggregate pace rather than averaging paces", () => {
+  const result = calculateDashboard([
+    run(5, { duration_minutes: 50 }),
+    run(3, { date: "2020-01-01", duration_minutes: 27 }),
+    run(2, { date: "2020-01-01", duration_minutes: 40, workout_type: { id: "walking", name: "Walking" } }),
+    run(20, { date: "2020-01-01", duration_minutes: 40, status: "planned" }),
+    run(30, { duration_minutes: 60, status: "in_progress" }),
+  ], wednesday);
+  assert.equal(formatRunningPace(result.averagePace), "10:00");
+  assert.equal(result.overall.runningMileage, 8);
+  assert.equal(result.overall.completedWorkouts, 3);
+  assert.equal(result.overall.averagePace, 77 / 8);
+  assert.equal(formatRunningPace(result.overall.averagePace), "9:38");
+});
+
+test("both time scopes have safe empty states and overall ignores invalid pace pairs", () => {
+  const empty = calculateDashboard([], wednesday);
+  assert.equal(empty.weeklyMileage, 0);
+  assert.equal(empty.averagePace, null);
+  assert.deepEqual(empty.overall, {
+    runningMileage: 0, completedWorkouts: 0, paceWorkoutCount: 0,
+    paceDistanceMiles: 0, paceDurationMinutes: 0, averagePace: null,
+  });
+  const result = calculateDashboard([
+    run(null, { date: "2020-01-01", duration_minutes: 40 }),
+    run(0, { date: "2020-01-01", duration_minutes: 40 }),
+    run(3, { date: "2020-01-01", duration_minutes: null }),
+    run(2, { date: "2020-01-01", duration_minutes: NaN }),
+    run(Infinity, { date: "2020-01-01", duration_minutes: 40 }),
+    run(-2, { date: "2020-01-01", duration_minutes: 40 }),
+  ], wednesday);
+  assert.equal(result.weeklyMileage, 0);
+  assert.equal(result.overall.runningMileage, 5);
+  assert.equal(result.overall.completedWorkouts, 6);
+  assert.equal(result.overall.averagePace, null);
+  assert.equal(formatRunningPace(result.overall.averagePace), "—");
+});

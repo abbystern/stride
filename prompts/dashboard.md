@@ -138,7 +138,7 @@ Summarize what was built and explain how I can verify it.
 Run these commands from the project root:
 
 ```bash
-# All seventeen pure dashboard calculation/formatting tests:
+# All twenty pure dashboard calculation/formatting tests:
 npm run test:dashboard
 
 # Only the assignment's required 4 + 5 + 6, excluding planned 8, test:
@@ -358,3 +358,53 @@ Do not change unrelated features. Stay on `feature/dashboard` and do not commit 
   `Pace: … minutes ÷ … miles` breakdown with this week's completed Running
   workouts. A zero count must display a dash; a 50-minute/5-mile eligible total
   must display 10:00/mi.
+
+## Weekly and overall statistics follow-up
+
+### User prompt — verbatim
+
+```text
+I want weekly stats and overall stats
+```
+
+### Changes and decisions — summary
+
+- Dashboard now displays clearly labeled **This week** and **Overall** sections.
+  Both show completed running mileage, completed-workout count across all
+  activities, and aggregate running pace with eligible-run count and calculation
+  details.
+- This week retains the local Monday–Sunday date range. Overall includes all
+  dates in the authenticated user's journal, including entries older than the
+  six-week chart window.
+- Both periods use a shared accumulation helper with identical completed-only
+  and Running-only mileage/pace rules. Pace is total valid duration divided by
+  total matched distance, not an average of the two periods or individual paces.
+  Missing/invalid pace pairs remain excluded; unavailable pace is a dash.
+- The six-week mileage chart remains weekly and is not changed to all-time.
+- Both sections use the same existing owner-scoped, paginated workout data and
+  existing refresh behavior. No additional queries, tables, migrations, or RLS
+  changes are required.
+- Both sections hide final totals on load errors, use safe zero/dash empty
+  states, and support desktop/mobile layouts. No unrelated feature was changed.
+
+### Verification and manual checks — summary
+
+- `npm run test:dashboard`: all 20 pure tests passed, covering the earlier pace
+  regressions plus distinct weekly/all-time totals, history outside six weeks,
+  aggregate weighting, and empty/invalid measurements.
+- `npm run build`: passed TypeScript and production build; the existing
+  nonblocking main-bundle size advisory remains.
+- Browser regression checks cover separate weekly/overall metrics, historical
+  entries, exclusion of other-user records, refresh/reload, empty/error states,
+  chart scope, and updates after create/edit/delete.
+- All 14 selected desktop/mobile dashboard cases passed across completed runs.
+  The broad run reached the shell tool's overall time limit after 11 passing
+  cases, with no reported test failures; a focused run completed the remaining
+  cases. Desktop/mobile screenshots were also reviewed. Browser responses are
+  mocked; no live signed-in Supabase account was inspected.
+- For a manual comparison, log a completed 5-mile/50-minute run this week and a
+  completed 3-mile/27-minute run in an older week. If these are the only runs,
+  This week should show 5.0 miles and 10:00/mi; Overall should show 8.0 miles and
+  9:38/mi. Adding a completed walk changes workout counts, not running totals.
+- The work stays on `feature/dashboard`. This follow-up does not include a
+  requested Git commit, push, or merge.

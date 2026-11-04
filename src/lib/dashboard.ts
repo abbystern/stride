@@ -30,6 +30,30 @@ function validMeasurement(value: number | null): value is number {
   return value !== null && Number.isFinite(value) && value >= 0;
 }
 
+function emptyTotals() {
+  return { runningMileage: 0, completedWorkouts: 0, paceWorkoutCount: 0, paceDistanceMiles: 0, paceDurationMinutes: 0 };
+}
+
+/** Called only for completed entries; weekly and overall use identical eligibility. */
+function addCompletedWorkout(totals: ReturnType<typeof emptyTotals>, workout: DashboardWorkout) {
+  totals.completedWorkouts++;
+  if (workout.workout_type?.name !== "Running") return;
+  if (validMeasurement(workout.distance_miles)) totals.runningMileage += workout.distance_miles;
+  if (validMeasurement(workout.distance_miles) && workout.distance_miles > 0 &&
+    validMeasurement(workout.duration_minutes) && workout.duration_minutes > 0) {
+    totals.paceDistanceMiles += workout.distance_miles;
+    totals.paceDurationMinutes += workout.duration_minutes;
+    totals.paceWorkoutCount++;
+  }
+}
+
+function finishTotals(totals: ReturnType<typeof emptyTotals>) {
+  return {
+    ...totals,
+    averagePace: totals.paceDistanceMiles > 0 ? totals.paceDurationMinutes / totals.paceDistanceMiles : null,
+  };
+}
+
 /** Uses the browser's local calendar; now can be injected for deterministic tests. */
 export function calculateDashboard(workouts: readonly DashboardWorkout[], now = new Date()) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
@@ -45,37 +69,31 @@ export function calculateDashboard(workouts: readonly DashboardWorkout[], now = 
     };
   });
   const current = weeks[5];
-  let completedWorkouts = 0;
-  let paceDistance = 0;
-  let paceDuration = 0;
-  let paceWorkoutCount = 0;
+  const weekly = emptyTotals();
+  const overall = emptyTotals();
 
   for (const workout of workouts) {
     if (workout.status !== "completed") continue;
+    // Overall includes every date, including entries older than the chart window.
+    addCompletedWorkout(overall, workout);
     const week = weeks.find((item) => workout.date >= item.weekStart && workout.date <= item.weekEnd);
     if (!week) continue;
-    if (week === current) completedWorkouts++;
+    if (week === current) addCompletedWorkout(weekly, workout);
     if (workout.workout_type?.name !== "Running") continue;
     if (validMeasurement(workout.distance_miles)) week.miles += workout.distance_miles;
-    // Use only matched distance/duration pairs; never divide by zero or use target pace.
-    if (week === current &&
-      validMeasurement(workout.distance_miles) && workout.distance_miles > 0 &&
-      validMeasurement(workout.duration_minutes) && workout.duration_minutes > 0) {
-      paceDistance += workout.distance_miles;
-      paceDuration += workout.duration_minutes;
-      paceWorkoutCount++;
-    }
   }
 
+  const weeklyStats = finishTotals(weekly);
   return {
     weekStart: current.weekStart,
     weekEnd: current.weekEnd,
     weeklyMileage: current.miles,
-    completedWorkouts,
-    averagePace: paceDistance > 0 ? paceDuration / paceDistance : null,
-    paceWorkoutCount,
-    paceDistanceMiles: paceDistance,
-    paceDurationMinutes: paceDuration,
+    completedWorkouts: weeklyStats.completedWorkouts,
+    averagePace: weeklyStats.averagePace,
+    paceWorkoutCount: weeklyStats.paceWorkoutCount,
+    paceDistanceMiles: weeklyStats.paceDistanceMiles,
+    paceDurationMinutes: weeklyStats.paceDurationMinutes,
+    overall: finishTotals(overall),
     weeks,
   };
 }

@@ -75,46 +75,105 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <section className="dashboard-metrics" aria-label="This week's training summary">
-          <article className="dashboard-metric">
-            <span className="dashboard-metric-label">Weekly mileage</span>
-            {loading || error ? <span className="dashboard-skeleton" aria-label={loading ? "Loading weekly mileage" : "Weekly mileage unavailable"} /> : (
-              <strong className="dashboard-metric-value" data-testid="weekly-mileage">{summary.weeklyMileage.toFixed(1)}</strong>
+        <div className="dashboard-period-grid">
+          <section className="dashboard-period" aria-labelledby="this-week-heading">
+            <header className="dashboard-period-heading">
+              <div>
+                <span className="dashboard-period-kicker">MONDAY — SUNDAY</span>
+                <h2 id="this-week-heading">This week</h2>
+                <p>{formatRange(summary.weekStart, summary.weekEnd)}</p>
+              </div>
+            </header>
+            <div className="dashboard-metrics" aria-label="This week's training summary">
+              <article className="dashboard-metric">
+                <span className="dashboard-metric-label">Running mileage</span>
+                {loading || error ? <span className="dashboard-skeleton" aria-label={loading ? "Loading weekly mileage" : "Weekly mileage unavailable"} /> : (
+                  <strong className="dashboard-metric-value" data-testid="weekly-mileage">{summary.weeklyMileage.toFixed(1)}</strong>
+                )}
+                <span className="dashboard-metric-unit">miles · completed runs</span>
+              </article>
+              <article className="dashboard-metric">
+                <span className="dashboard-metric-label">Completed workouts</span>
+                {loading || error ? <span className="dashboard-skeleton" aria-label={loading ? "Loading weekly completed workouts" : "Weekly completed workouts unavailable"} /> : (
+                  <strong className="dashboard-metric-value" data-testid="completed-workouts">{summary.completedWorkouts}</strong>
+                )}
+                <span className="dashboard-metric-unit">workouts · all types</span>
+              </article>
+              <article className="dashboard-metric">
+                <span className="dashboard-metric-label">Average running pace</span>
+                {loading || error ? <span className="dashboard-skeleton" aria-label={loading ? "Loading weekly average pace" : "Weekly average pace unavailable"} /> : (
+                  <strong className="dashboard-metric-value" data-testid="average-pace">
+                    {formatRunningPace(summary.averagePace)}{summary.averagePace !== null && <small className="dashboard-pace-unit">/mi</small>}
+                  </strong>
+                )}
+                <span className="dashboard-metric-unit">
+                  {loading || error ? "min / mile · completed runs" :
+                    `${summary.paceWorkoutCount} eligible completed ${summary.paceWorkoutCount === 1 ? "run" : "runs"}`}
+                </span>
+              </article>
+            </div>
+            {!loading && !error && (
+              <p className="dashboard-note dashboard-period-note">
+                Metrics cover Monday through Sunday in your local calendar.
+                {summary.averagePace === null && " Pace appears when at least one completed run has both a positive distance and duration."}
+                {summary.averagePace !== null && (
+                  <span data-testid="pace-calculation">
+                    {" "}Pace: {summary.paceDurationMinutes.toLocaleString("en-US", { maximumFractionDigits: 3 })} minutes ÷ {summary.paceDistanceMiles.toLocaleString("en-US", { maximumFractionDigits: 3 })} miles, using only eligible completed Running workouts this week.
+                  </span>
+                )}
+              </p>
             )}
-            <span className="dashboard-metric-unit">miles · completed runs</span>
-          </article>
-          <article className="dashboard-metric">
-            <span className="dashboard-metric-label">Completed workouts</span>
-            {loading || error ? <span className="dashboard-skeleton" aria-label={loading ? "Loading completed workouts" : "Completed workouts unavailable"} /> : (
-              <strong className="dashboard-metric-value" data-testid="completed-workouts">{summary.completedWorkouts}</strong>
-            )}
-            <span className="dashboard-metric-unit">workouts · all types</span>
-          </article>
-          <article className="dashboard-metric">
-            <span className="dashboard-metric-label">Average running pace</span>
-            {loading || error ? <span className="dashboard-skeleton" aria-label={loading ? "Loading average pace" : "Average pace unavailable"} /> : (
-              <strong className="dashboard-metric-value" data-testid="average-pace">
-                {formatRunningPace(summary.averagePace)}{summary.averagePace !== null && <small className="dashboard-pace-unit">/mi</small>}
-              </strong>
-            )}
-            <span className="dashboard-metric-unit">
-              {loading || error ? "min / mile · completed runs" :
-                `${summary.paceWorkoutCount} eligible completed ${summary.paceWorkoutCount === 1 ? "run" : "runs"} · this week`}
-            </span>
-          </article>
-        </section>
+          </section>
 
-        {!loading && !error && (
-          <p className="dashboard-note">
-            Current week: {formatRange(summary.weekStart, summary.weekEnd)}. Mileage, workout count, and pace above cover Monday through Sunday in your local calendar.
-            {summary.averagePace === null && " Pace appears when at least one completed run has both a positive distance and duration."}
-            {summary.averagePace !== null && (
-              <span data-testid="pace-calculation">
-                {" "}Pace: {summary.paceDurationMinutes.toLocaleString("en-US", { maximumFractionDigits: 3 })} minutes ÷ {summary.paceDistanceMiles.toLocaleString("en-US", { maximumFractionDigits: 3 })} miles, using only eligible completed Running workouts this week.
-              </span>
+          <section className="dashboard-period dashboard-period--overall" aria-labelledby="overall-heading">
+            <header className="dashboard-period-heading">
+              <div>
+                <span className="dashboard-period-kicker">ALL DATES</span>
+                <h2 id="overall-heading">Overall</h2>
+                <p>Your complete training journal</p>
+              </div>
+            </header>
+            <div className="dashboard-metrics" aria-label="Overall training summary">
+              <article className="dashboard-metric">
+                <span className="dashboard-metric-label">Running mileage</span>
+                {loading || error ? <span className="dashboard-skeleton" aria-label={loading ? "Loading overall mileage" : "Overall mileage unavailable"} /> : (
+                  <strong className="dashboard-metric-value" data-testid="overall-mileage">{summary.overall.runningMileage.toFixed(1)}</strong>
+                )}
+                <span className="dashboard-metric-unit">miles · completed runs</span>
+              </article>
+              <article className="dashboard-metric">
+                <span className="dashboard-metric-label">Completed workouts</span>
+                {loading || error ? <span className="dashboard-skeleton" aria-label={loading ? "Loading overall completed workouts" : "Overall completed workouts unavailable"} /> : (
+                  <strong className="dashboard-metric-value" data-testid="overall-completed-workouts">{summary.overall.completedWorkouts}</strong>
+                )}
+                <span className="dashboard-metric-unit">workouts · all types</span>
+              </article>
+              <article className="dashboard-metric">
+                <span className="dashboard-metric-label">Average running pace</span>
+                {loading || error ? <span className="dashboard-skeleton" aria-label={loading ? "Loading overall average pace" : "Overall average pace unavailable"} /> : (
+                  <strong className="dashboard-metric-value" data-testid="overall-average-pace">
+                    {formatRunningPace(summary.overall.averagePace)}{summary.overall.averagePace !== null && <small className="dashboard-pace-unit">/mi</small>}
+                  </strong>
+                )}
+                <span className="dashboard-metric-unit">
+                  {loading || error ? "min / mile · completed runs" :
+                    `${summary.overall.paceWorkoutCount} eligible completed ${summary.overall.paceWorkoutCount === 1 ? "run" : "runs"}`}
+                </span>
+              </article>
+            </div>
+            {!loading && !error && (
+              <p className="dashboard-note dashboard-period-note">
+                Totals include completed workouts across all dates.
+                {summary.overall.averagePace === null && " Pace appears when at least one completed run has both a positive distance and duration."}
+                {summary.overall.averagePace !== null && (
+                  <span data-testid="overall-pace-calculation">
+                    {" "}Pace: {summary.overall.paceDurationMinutes.toLocaleString("en-US", { maximumFractionDigits: 3 })} minutes ÷ {summary.overall.paceDistanceMiles.toLocaleString("en-US", { maximumFractionDigits: 3 })} miles, using only eligible completed Running workouts.
+                  </span>
+                )}
+              </p>
             )}
-          </p>
-        )}
+          </section>
+        </div>
 
         <section className="dashboard-panel" aria-labelledby="weekly-mileage-heading">
           <div className="dashboard-panel-heading">
