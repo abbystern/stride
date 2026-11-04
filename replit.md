@@ -25,4 +25,16 @@
 - Browser tests use Replit's Chromium when available; elsewhere install Playwright Chromium or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE`.
 - Browser output and caches are excluded from Git and publishing.
 
-Dashboards, stars, weekly planning, lifting templates, nutrition, and recovery are intentionally not included.
+## Starred workouts
+
+- Feature 5 adds star/unstar controls to workout lists/details and the protected
+  `/app/stars` view, using one shared stars junction table.
+- Review and manually run `supabase/migrations/003_stars.sql` in Supabase after
+  migrations 001 and 002. Repository files do not mean the remote migration ran.
+- Missing favorites storage displays an error/retry while existing workout
+  logging remains available. See `schema.md` and `prompts/stars.md`.
+- `bash scripts/test-workout-database.sh` now also tests stars ownership, unique
+  pairs, anonymous denial, unchanged workout policies, and cascading deletion.
+- Browser tests remain intercepted API-contract tests, not live Supabase tests.
+
+Dashboards, weekly planning, lifting templates, nutrition, and recovery are intentionally not included.

@@ -11,6 +11,8 @@ import WorkoutHistoryPage from "./pages/workouts/WorkoutHistoryPage";
 import NewWorkoutPage from "./pages/workouts/NewWorkoutPage";
 import WorkoutDetailPage from "./pages/workouts/WorkoutDetailPage";
 import EditWorkoutPage from "./pages/workouts/EditWorkoutPage";
+import StarredWorkoutsPage from "./pages/workouts/StarredWorkoutsPage";
+import { StarsProvider } from "./providers/StarsProvider";
 import "./workouts.css";
 
 function LoadingScreen() {
@@ -45,7 +47,7 @@ function ProtectedRoute() {
 
   if (!ready) return <LoadingScreen />;
   if (!session) return <Navigate to="/login" replace />;
-  return <Outlet />;
+  return <StarsProvider><Outlet /></StarsProvider>;
 }
 
 function EntryRoute() {
@@ -65,6 +67,7 @@ export default function App() {
       <Route path="/signup" element={<AuthPage mode="signup" />} />
       <Route path="/app" element={<ProtectedRoute />}>
         <Route index element={<AccountPage />} />
+        <Route path="stars" element={<StarredWorkoutsPage />} />
         <Route path="workouts" element={<WorkoutHistoryPage />} />
         <Route path="workouts/new" element={<NewWorkoutPage />} />
         <Route path="workouts/:id" element={<WorkoutDetailPage />} />

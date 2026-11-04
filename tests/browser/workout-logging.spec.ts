@@ -26,6 +26,11 @@ async function backend(page: Page, signIn = true) {
     rows: [] as RecordData[],
     createCalls: 0, deleteCalls: 0, failWrite: false, failDelete: false,
     failRead: false,
+    stars: new Set<string>(),
+    starWriteCalls: 0,
+    failStarWrite: false,
+    failStarLoad: false,
+    delayStarWrite: false,
     pageErrors: [] as string[],
   };
   page.on("pageerror", (error) => state.pageErrors.push(error.message));
@@ -56,6 +61,38 @@ async function backend(page: Page, signIn = true) {
     const request = route.request();
     const url = new URL(request.url());
     const method = request.method();
+    if (url.pathname.endsWith("/stars")) {
+      if (method === "GET") {
+        expect(url.searchParams.get("user_id")).toBe(`eq.${owner}`);
+        if (state.failStarLoad) return route.fulfill({
+          status: 404, json: { code: "PGRST205", message: "Fixture: missing stars table" },
+        });
+        return route.fulfill({ json: [...state.stars].map((workout_id) => ({
+          id: crypto.randomUUID(), workout_id,
+        })) });
+      }
+      state.starWriteCalls++;
+      if (state.delayStarWrite) await new Promise((resolve) => setTimeout(resolve, 500));
+      if (state.failStarWrite) {
+        state.failStarWrite = false;
+        return route.fulfill({ status: 503, json: { code: "PGRST000", message: "Fixture: outage" } });
+      }
+      if (method === "POST") {
+        const body = request.postDataJSON();
+        expect(body.user_id).toBe(owner);
+        expect(url.searchParams.get("on_conflict")).toBe("user_id,workout_id");
+        expect(request.headers().prefer).toContain("resolution=ignore-duplicates");
+        if (!state.rows.some((row) => row.id === body.workout_id && row.user_id === owner)) {
+          return route.fulfill({ status: 403, json: { code: "42501", message: "Fixture: ownership rejected" } });
+        }
+        state.stars.add(body.workout_id);
+        return route.fulfill({ status: 201, body: "" });
+      }
+      expect(method).toBe("DELETE");
+      expect(url.searchParams.get("user_id")).toBe(`eq.${owner}`);
+      state.stars.delete(url.searchParams.get("workout_id")!.replace(/^eq\./, ""));
+      return route.fulfill({ status: 204 });
+    }
     if (url.pathname.endsWith("/workout_types")) {
       return route.fulfill({ json: activities });
     }
@@ -103,6 +140,7 @@ async function backend(page: Page, signIn = true) {
       }
       if (index < 0) return route.fulfill({ json: [] });
       const [deleted] = state.rows.splice(index, 1);
+      state.stars.delete(String(deleted.id));
       return route.fulfill({ json: [{ id: deleted.id }] });
     }
     return route.fulfill({ status: 400, json: { message: "Unexpected test request" } });
@@ -262,9 +300,110 @@ test("unavailable and other-user workout IDs show no private details or controls
 
 test("all workout routes redirect signed-out visitors without bypassing auth", async ({ page }) => {
   await backend(page, false);
-  for (const path of ["/app/workouts", "/app/workouts/new", "/app/workouts/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/edit"]) {
+  for (const path of ["/app/workouts", "/app/stars", "/app/workouts/new", "/app/workouts/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/edit"]) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
   }
+});
+
+test("stars: card, detail and favorites share saved state across refreshes", async ({ page }) => {
+  const state = await backend(page);
+  state.rows.push(record(), record({
+    id: "abababab-abab-4bab-8bab-abababababab", title: "Evening walk",
+  }));
+  await page.goto("/app/workouts");
+  const star = page.getByRole("button", { name: "Star Saved easy run", exact: true });
+  await expect(star).toHaveAttribute("aria-pressed", "false");
+  await star.click();
+  await expect(page.getByRole("button", { name: "Unstar Saved easy run" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page).toHaveURL(/\/app\/workouts$/);
+  expect(state.stars.size).toBe(1);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Unstar Saved easy run" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("link", { name: /^Open Saved easy run,/ }).click();
+  await expect(page.getByRole("button", { name: "Unstar Saved easy run" })).toBeVisible();
+  await page.getByRole("button", { name: "Unstar Saved easy run" }).click();
+  await expect(page.getByRole("button", { name: "Star Saved easy run", exact: true })).toHaveAttribute("aria-pressed", "false");
+  await page.getByRole("button", { name: "Star Saved easy run", exact: true }).click();
+  await page.goto("/app");
+  await page.getByRole("link", { name: "Starred workouts", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Starred Workouts", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^Open Saved easy run,/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^Open Evening walk,/ })).toHaveCount(0);
+  await page.screenshot({ path: test.info().outputPath("starred-workouts.png"), fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.getByRole("link", { name: /^Open Saved easy run,/ }).click();
+  await expect(page.getByRole("heading", { name: "Saved easy run", exact: true })).toBeVisible();
+  await page.goto("/app/stars");
+  await page.getByRole("button", { name: "Unstar Saved easy run" }).click();
+  await expect(page.locator(".starred-empty")).toBeVisible();
+  await page.reload();
+  await expect(page.locator(".starred-empty")).toBeVisible();
+  expect(state.stars.size).toBe(0);
+  expect(state.pageErrors).toEqual([]);
+});
+
+test("stars: failed changes retain the saved state and repeated clicks send one write", async ({ page }) => {
+  const state = await backend(page);
+  state.rows.push(record());
+  await page.goto("/app/workouts");
+  state.failStarWrite = true;
+  await page.getByRole("button", { name: "Star Saved easy run", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("Check your connection");
+  await expect(page.getByRole("button", { name: "Star Saved easy run", exact: true })).toHaveAttribute("aria-pressed", "false");
+  expect(state.stars.size).toBe(0);
+  state.delayStarWrite = true;
+  const writesBefore = state.starWriteCalls;
+  await page.getByRole("button", { name: "Star Saved easy run", exact: true }).evaluate((element) => {
+    (element as HTMLButtonElement).click();
+    (element as HTMLButtonElement).click();
+  });
+  await expect(page.getByRole("button", { name: "Star Saved easy run", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Unstar Saved easy run" })).toBeEnabled();
+  expect(state.starWriteCalls - writesBefore).toBe(1);
+  state.failStarWrite = true;
+  await page.getByRole("button", { name: "Unstar Saved easy run" }).click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Unstar Saved easy run" })).toHaveAttribute("aria-pressed", "true");
+  expect(state.stars.size).toBe(1);
+  expect(state.pageErrors).toEqual([]);
+});
+
+test("stars: missing migration has a useful error, blocks toggles, and can retry", async ({ page }) => {
+  const state = await backend(page);
+  state.rows.push(record());
+  state.failStarLoad = true;
+  await page.goto("/app/workouts");
+  await expect(page.getByRole("alert")).toContainText("003_stars.sql");
+  await expect(page.getByRole("button", { name: "Star Saved easy run", exact: true })).toBeDisabled();
+  await expect(page.getByRole("link", { name: /^Open Saved easy run,/ })).toBeVisible();
+  await page.goto("/app/stars");
+  await expect(page.getByRole("alert")).toContainText("003_stars.sql");
+  await expect(page.locator(".starred-empty")).toHaveCount(0);
+  state.failStarLoad = false;
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  await expect(page.locator(".starred-empty")).toBeVisible();
+  expect(state.pageErrors).toEqual([]);
+});
+
+test("stars: workout deletion clears favorites and private workout IDs stay hidden", async ({ page }) => {
+  const state = await backend(page);
+  const privateId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  state.rows.push(record(), record({ id: privateId, user_id: otherOwner, title: "Private other workout" }));
+  state.stars.add("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  // A corrupt fixture ID must not bypass the separately owner-filtered workouts.
+  state.stars.add(privateId);
+  await page.goto("/app/stars");
+  await expect(page.getByRole("link", { name: /^Open Saved easy run,/ })).toBeVisible();
+  await expect(page.getByText("Private other workout", { exact: true })).toHaveCount(0);
+  await page.getByRole("link", { name: /^Open Saved easy run,/ }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.getByRole("button", { name: "Delete workout", exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/workouts$/);
+  await page.goto("/app/stars");
+  await expect(page.locator(".starred-empty")).toBeVisible();
+  await page.reload();
+  await expect(page.locator(".starred-empty")).toBeVisible();
+  expect(state.pageErrors).toEqual([]);
 });

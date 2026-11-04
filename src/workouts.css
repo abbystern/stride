@@ -129,9 +129,16 @@
 .workout-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 20px;
   padding: 22px 8px 22px 0;
   border-bottom: 1px solid var(--line);
+}
+
+.workout-row-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .workout-row-link {
@@ -473,6 +480,109 @@
   background: #f4f6f1;
 }
 
+.workout-count {
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.star-control {
+  display: flex;
+  min-width: 44px;
+  flex-direction: column;
+  align-items: center;
+}
+
+.star-button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: #8a9588;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.star-button:hover:not(:disabled) {
+  background: #edf1e9;
+  color: var(--sage-dark);
+}
+
+.star-button.is-starred {
+  background: #e8eee5;
+  color: var(--sage-dark);
+}
+
+.star-button:active:not(:disabled) {
+  transform: scale(.94);
+}
+
+.star-button:disabled {
+  cursor: wait;
+  opacity: .58;
+}
+
+.star-error {
+  width: max-content;
+  max-width: 220px;
+  color: #925648;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.stars-load-banner {
+  display: flex;
+  width: min(100% - 48px, 1080px);
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 14px auto 0;
+  padding: 10px 13px;
+  border: 1px solid #ead9d4;
+  border-radius: 8px;
+  background: #fcf3ef;
+  color: #80584f;
+  font-size: 12px;
+}
+
+.stars-load-banner p {
+  margin: 0;
+}
+
+.stars-load-banner button {
+  min-height: 36px;
+  padding: 0 11px;
+  border: 1px solid #e3c9c0;
+  border-radius: 7px;
+  background: #fffefa;
+  color: #80584f;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.starred-empty-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 14px;
+  place-items: center;
+  border: 1px solid #dfe7db;
+  border-radius: 13px;
+  background: #edf2e9;
+  color: var(--sage-dark);
+}
+
+.starred-empty .workout-secondary {
+  gap: 8px;
+}
+
 @media (max-width: 600px) {
   .workout-header {
     width: calc(100% - 36px);
@@ -480,8 +590,19 @@
   }
 
   .workout-header nav {
-    gap: 15px;
-    font-size: 12px;
+    gap: clamp(6px, 2vw, 11px);
+    font-size: clamp(10px, 2.7vw, 12px);
+    white-space: nowrap;
+  }
+
+  .workout-header > .brand {
+    gap: 6px;
+    font-size: 19px;
+  }
+
+  .workout-header .brand-icon {
+    width: 28px;
+    height: 28px;
   }
 
   .workout-main,
@@ -522,7 +643,25 @@
   }
 
   .workout-row {
-    gap: 10px;
+    gap: 8px;
+  }
+
+  .workout-row-tools {
+    gap: 3px;
+  }
+
+  .workout-row-tools .status-pill {
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stars-load-banner {
+    width: calc(100% - 36px);
+  }
+
+  .star-error {
+    max-width: 140px;
   }
 
   .delete-confirm {

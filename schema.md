@@ -6,10 +6,14 @@
 | --- | --- | --- |
 | Supabase-managed `auth.users` | Managed by Supabase Auth | Existing authentication is working, as confirmed by the user |
 | `public.users` | Defined in `001_auth_users.sql` | User previously applied the migration and verified a profile |
-| `public.workout_types` | Defined and locally tested in `002_workout_database.sql` | Awaiting the user's manual review and application |
-| `public.workouts` | Defined and locally tested in `002_workout_database.sql` | Awaiting the user's manual review and application |
+| `public.workout_types` | Defined and locally tested in `002_workout_database.sql` | Available in the user's successful Feature 3 manual tests |
+| `public.workouts` | Defined and locally tested in `002_workout_database.sql` | User confirmed real CRUD and persistence in Feature 3 |
+| `public.stars` | Defined in `003_stars.sql`, with local security tests | Requires manual review and application in Supabase |
 
-Feature 2 implements database storage and activity types only. There are no workout forms, workout lists, dashboards, or wearable integrations yet. Repository files do not prove that a migration has been applied remotely.
+Authentication and workout logging/validation are implemented. Feature 5 adds
+private favorites and a Starred Workouts page. There are still no dashboards or
+wearable integrations. Repository files do not prove a migration was applied
+remotely; migration 003 has not been applied by the agent.
 
 ## 1. User identities and profiles
 
@@ -130,20 +134,68 @@ An update must satisfy ownership both before and after the change, so a user can
 
 Supabase database owners and service roles can bypass RLS. Do not use private service-role keys in the browser, and do not treat an unrestricted SQL Editor query as a user-isolation test.
 
-## 4. Relationships and deletion behavior
+## 4. Private starred workouts
+
+### `public.stars`
+
+Source: `supabase/migrations/003_stars.sql`.
+
+This is one shared junction table, not a separate table per user.
+
+| Column | PostgreSQL type | Required/default | Keys and constraints |
+| --- | --- | --- | --- |
+| `id` | `uuid` | Required; `gen_random_uuid()` | Primary key |
+| `user_id` | `uuid` | Required; `auth.uid()` | FK to `public.users.id`, `ON DELETE CASCADE` |
+| `workout_id` | `uuid` | Required | FK to `public.workouts.id`, `ON DELETE CASCADE` |
+
+- `stars_user_workout_key`: unique `(user_id, workout_id)`, preventing duplicate
+  favorites and providing an owner-prefixed index.
+- `stars_workout_idx`: `(workout_id)`, supporting foreign-key deletion lookup.
+- Existing users, workouts, and workout policies are unchanged.
+
+### Stars: permissions and RLS
+
+RLS is enabled. All `PUBLIC`, `anon`, and prior `authenticated` table grants are
+revoked, then authenticated clients receive only `SELECT`, `INSERT`, and
+`DELETE`. They receive no `UPDATE` grant or policy, so a favorite cannot be
+reassigned to another owner or workout.
+
+| Operation | Policy | Database condition |
+| --- | --- | --- |
+| Select | `stars_select_own` | `user_id = auth.uid()` and referenced workout belongs to that same user |
+| Insert | `stars_insert_own_workout` | Same ownership conditions in `WITH CHECK` |
+| Delete | `stars_delete_own` | `user_id = auth.uid()` |
+
+The workout ownership check uses an `EXISTS` query against `public.workouts`
+under its existing RLS. A known private workout UUID cannot be starred by
+another user, and joining through stars cannot reveal private workouts. The
+select check also hides an inconsistent cross-owner reference inserted by an
+administrator that bypasses RLS. Database owners/service roles can still bypass
+RLS; never use service-role credentials in the browser.
+
+The app loads only the signed-in user's stars and separately owner-filtered
+workouts. Star creation uses `ON CONFLICT DO NOTHING` for the unique user/workout
+pair, so repeated requests are idempotent and do not require `UPDATE` permission.
+Unstarring deletes only the matching user's workout reference.
+
+## 5. Relationships and deletion behavior
 
 ```text
 auth.users       1 ── 1 public.users
 public.users     1 ── * public.workouts
 workout_types    1 ── * public.workouts
+public.users     1 ── * public.stars
+public.workouts  1 ── * public.stars
 ```
 
 - Each workout belongs to one existing public user profile and one existing activity type.
 - Deleting an Auth user cascades to the public profile; deleting a profile cascades to its workouts. No accounts or records are deleted by migration 002.
 - An activity type referenced by a workout cannot be deleted, avoiding orphaned workouts.
+- Deleting a workout removes its stars automatically. Deleting a profile removes
+  its stars as well as its workouts. Migration 003 itself deletes no records.
 - Workout UUIDs are generated independently of external activity IDs. Garmin imports, provider identifiers, deduplication, and import jobs remain future work; none are implemented here.
 
-## 5. Applying migration 002 manually
+## 6. Applying migration 002 manually
 
 1. Confirm you are viewing the intended Supabase project and that `public.users` from migration 001 already exists. Apply 001 first only if the authentication schema has not been installed.
 2. Review `supabase/migrations/002_workout_database.sql`.
@@ -218,11 +270,55 @@ The test script creates a disposable local PostgreSQL cluster with no TCP listen
 
 **Do not run `supabase/tests/002_workout_database.sql` against the real Supabase project.** It is local-only fixture/test code, not a migration. These tests passed locally but do not claim that migration 002 has been applied or verified against the real Supabase Auth service.
 
-## 6. Planned tables — not implemented
+## 7. Applying migration 003 manually
+
+1. Confirm you are in the intended Supabase project and that migrations 001 and
+   002 have already created `public.users` and `public.workouts`.
+2. Review `supabase/migrations/003_stars.sql`.
+3. In **Supabase SQL Editor → New query**, paste the entire migration and run it.
+   Its transaction installs the table, constraint, index, grants, and policies
+   together. It does not alter existing authentication or workout policies.
+4. Verify the three columns, both foreign keys, and the unique user/workout
+   constraint. Confirm the three policies and RLS:
+
+```sql
+select relrowsecurity
+from pg_class
+where oid = 'public.stars'::regclass;
+-- true
+
+select policyname, cmd, roles, qual, with_check
+from pg_policies
+where schemaname = 'public' and tablename = 'stars';
+-- Three authenticated policies: SELECT, INSERT, DELETE.
+
+select conname, pg_get_constraintdef(oid)
+from pg_constraint
+where conrelid = 'public.stars'::regclass;
+-- Primary key, two cascading foreign keys, unique (user_id, workout_id).
+```
+
+5. Refresh Stride after migration. If the missing-migration message is already
+   visible, use **Try again**.
+6. With two actual accounts, verify that each sees only its own favorites and
+   cannot star the other's workout UUID. Test using authenticated requests or
+   `SET LOCAL ROLE authenticated` with a test JWT subject in a rollback-only
+   transaction; an unrestricted SQL Editor query is not an RLS test.
+
+The migration is safe to rerun against its own schema: it retains rows and
+recreates only its own named policies. It does not repair an incompatible
+pre-existing stars schema. Investigate any error instead of disabling RLS.
+
+Local verification: `bash scripts/test-workout-database.sh` now tests migrations
+001–003, including duplicate prevention, own-star insert/read/delete, forged
+ownership, cross-user joins/deletes, anonymous denial, absence of UPDATE
+privileges, repeat-run safety, and workout/profile cascade cleanup. It uses
+synthetic identities in disposable local PostgreSQL, not remote Supabase.
+
+## 8. Planned tables — not implemented
 
 The following remain future features from `PLAN.md`:
 
-- `stars`
 - `workout_templates`
 - `exercises`
 - `template_exercises`
@@ -232,4 +328,6 @@ The following remain future features from `PLAN.md`:
 - `nutrition_goals`
 - `recovery_entries`
 
-`workouts.template_id` is also deferred until the template feature. No forms, dashboards, nutrition/recovery tables, analytics, or external integrations were added in Feature 2.
+`workouts.template_id` is also deferred until the template feature. Workout
+logging and favorites are implemented; dashboards, nutrition/recovery tables,
+analytics, and external integrations remain deferred.
