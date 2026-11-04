@@ -5,3 +5,4 @@
 - [Calendar usability feedback](calendar-usability-feedback.md) — first-time athlete testing requested explicit rest days and easier calendar planning.
 - [Supabase query typing](supabase-query-typing.md) — check SDK builder return types; preserve owner filters and cardinality when narrowing results.
 - [Simple recovery scope](recovery-scope.md) — first recovery version is only sleep, energy, soreness, and basic history, not the broader planned journal.
+- [Publishing across branches](publishing-branch-consistency.md) — a healthy live snapshot can hide missing startup settings in another checkout.

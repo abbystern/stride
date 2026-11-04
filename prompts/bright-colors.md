@@ -137,3 +137,29 @@ The fixture verifies 8.0 completed running miles on the dashboard and 8.0
 completed / 8.0 scheduled running miles on the calendar. It also checks
 cobalt chart bars, horizontal overflow, and browser runtime errors. These
 are visual checks with synthetic sessions, not a live Supabase login test.
+
+## Republishing follow-up
+
+User report (verbatim): "there's an error with republishing"
+
+Diagnosis summary: The current design branch did not contain the production
+startup configuration used by the previous successful deployment. It lacked
+both the publishing build/run settings and an `npm start` script, although
+the already-published snapshot remained available.
+
+Restored the previously used `serve` dependency and `npm start` command to
+serve the built `dist/` directory on `0.0.0.0`, using `PORT` or port 5000.
+Publishing keeps the existing Autoscale target, builds with `npm run build`,
+and runs with `npm start`. This is separate from the visual changes: no UI,
+authentication, data, database, calculation, or routing code was modified.
+
+The publishing configuration must be included in the repository base used
+for future branches; a successful live snapshot does not configure a new
+checkout automatically. No merge or production publish was performed.
+
+Verification: the production build passed; `npm start` served HTTP 200 and
+the SPA document at `/`, `/login`, `/signup`, `/app/dashboard`, and
+`/app/calendar`; built JavaScript was served with the correct content type.
+The temporary verification process was stopped. Existing dependency
+versions are unchanged; only the missing static-server dependency was
+restored. Private page rendering was not re-tested with a live account.
