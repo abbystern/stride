@@ -315,6 +315,27 @@
   margin-top: 5px;
 }
 
+.calendar-day-date-select {
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 1px 2px;
+}
+
+.calendar-day-date-select:hover,
+.calendar-day-date-select[aria-pressed="true"] {
+  color: var(--cal-sage-dark);
+  background: var(--cal-sage-pale);
+}
+
+.calendar-day-date-select:focus-visible {
+  outline: 2px solid #a7bea3;
+  outline-offset: 2px;
+}
+
 .calendar-day--today .calendar-day-header {
   background: var(--cal-sage-pale);
 }
@@ -475,10 +496,12 @@
 
 @media (max-width: 1050px) {
   .calendar-week-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(145px, 1fr));
+    overflow-x: auto;
   }
+
   .calendar-day {
-    min-height: 225px;
+    min-height: 210px;
   }
 }
 
@@ -512,6 +535,7 @@
   .calendar-week-grid {
     grid-template-columns: 1fr;
     gap: 10px;
+    overflow: visible;
   }
   .calendar-day {
     min-height: 0;
@@ -558,5 +582,164 @@
   .calendar-skeleton {
     animation: none;
     transition: none;
+  }
+}
+
+.calendar-view-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 18px;
+}
+
+.calendar-summary-scope {
+  grid-column: 1 / -1;
+  color: var(--cal-muted);
+  font-size: 12px;
+  margin: 0 0 -5px;
+}
+
+.calendar-view-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--cal-line);
+  border-radius: 9px;
+  background: #f4f5ef;
+}
+
+.calendar-view-switch button {
+  min-height: 34px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--cal-muted);
+  font: 700 12px "DM Sans", sans-serif;
+  cursor: pointer;
+}
+
+.calendar-view-switch button[aria-pressed="true"] {
+  background: var(--cal-panel);
+  color: var(--cal-ink);
+  box-shadow: 0 1px 3px #28332d18;
+}
+
+.calendar-period {
+  margin: 0;
+}
+
+.calendar-week-grid--month {
+  gap: 7px;
+}
+
+.calendar-week-grid--month .calendar-day {
+  min-height: 175px;
+}
+
+.calendar-week-grid--month .calendar-day--outside {
+  background: #f2f2ec;
+}
+
+.calendar-week-grid--month .calendar-day--outside .calendar-day-header {
+  background: #eeefe9;
+}
+
+.calendar-week-grid--month .calendar-day--outside .calendar-day-header strong,
+.calendar-week-grid--month .calendar-day--outside .calendar-day-header span {
+  color: #a2aaa0;
+}
+
+.calendar-day-content {
+  overflow-wrap: anywhere;
+}
+
+.calendar-workout-time {
+  display: block;
+  color: var(--cal-muted);
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.calendar-workout--rest {
+  background: #f1f3ed;
+  border-color: #e2e7dd;
+  border-left-color: #a9b6a1;
+}
+
+.calendar-workout--rest .calendar-workout-type {
+  color: #687867;
+  font-weight: 700;
+}
+
+.calendar-day-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: auto;
+  padding: 8px 2px 1px;
+  border-top: 1px solid #edf0e9;
+}
+
+.calendar-day-actions .calendar-link {
+  line-height: 1.5;
+}
+
+.calendar-day-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.calendar-day-header strong {
+  margin-top: 0;
+}
+
+.calendar-week-grid--month .calendar-day-header {
+  min-height: 42px;
+  padding: 9px 10px;
+}
+
+.calendar-week-grid--month .calendar-day-header span {
+  letter-spacing: .04em;
+  font-size: 9px;
+}
+
+.calendar-week-grid--month .calendar-day-content {
+  padding: 8px;
+}
+
+.calendar-week-grid--month .calendar-workout {
+  padding: 7px;
+}
+
+.calendar-week-grid--month .calendar-workout-title {
+  font-size: 11px;
+}
+
+@media (max-width: 767px) {
+  .calendar-view-controls {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .calendar-week-grid--month {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-week-grid--month .calendar-day {
+    min-height: 0;
+  }
+
+  .calendar-week-grid--month .calendar-day-header {
+    min-height: auto;
+    padding: 11px 14px;
+  }
+
+  .calendar-week-grid--month .calendar-day-content {
+    padding: 10px 12px 12px;
   }
 }

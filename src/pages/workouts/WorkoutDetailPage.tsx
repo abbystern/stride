@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { useWorkout, useWorkoutMutations } from "../../hooks/useWorkouts";
-import { formatWorkoutDate, WORKOUT_STATUSES } from "../../lib/workoutModel";
+import { formatWorkoutDate, formatWorkoutTime, WORKOUT_STATUSES } from "../../lib/workoutModel";
 import { WorkoutLayout } from "../../components/workouts/WorkoutLayout";
 import { StarButton } from "../../components/workouts/StarButton";
 import { useStars } from "../../providers/StarsProvider";
@@ -14,6 +14,7 @@ export default function WorkoutDetailPage() {
   const { pending, error: deleteError, clearError, deleteWorkout } = useWorkoutMutations();
   const { forgetWorkout } = useStars();
   const [confirming, setConfirming] = useState(false);
+  const isRestDay = workout?.workout_type?.name === "Rest Day";
 
   async function confirmDelete() {
     clearError();
@@ -52,23 +53,23 @@ export default function WorkoutDetailPage() {
             <article className="workout-detail-card">
               <header className="workout-detail-top">
                 <div>
-                  <span className="eyebrow">{workout.workout_type?.name ?? "Activity"}</span>
+                  <span className="eyebrow">{isRestDay ? "Rest Day" : workout.workout_type?.name ?? "Activity"}</span>
                   <h1>{workout.title}</h1>
-                  <p className="workout-detail-date">{formatWorkoutDate(workout.date)}</p>
+                  <p className="workout-detail-date">{formatWorkoutDate(workout.date)} · {formatWorkoutTime(workout.scheduled_start_time)}</p>
                 </div>
                 <span className="status-pill" data-status={workout.status}>
                   {WORKOUT_STATUSES.find((item) => item.value === workout.status)?.label ?? workout.status}
                 </span>
               </header>
               <div className="workout-detail-body">
-                {workout.run_type && <DetailItem label="Run type" value={workout.run_type} />}
-                {workout.target_pace && <DetailItem label="Target pace" value={workout.target_pace} />}
-                {workout.distance_miles !== null && <DetailItem label="Distance" value={`${workout.distance_miles} miles`} />}
-                {workout.duration_minutes !== null && <DetailItem label="Duration" value={`${workout.duration_minutes} minutes`} />}
-                {workout.elevation_feet !== null && <DetailItem label="Elevation gain" value={`${workout.elevation_feet} feet`} />}
+                {!isRestDay && workout.run_type && <DetailItem label="Run type" value={workout.run_type} />}
+                {!isRestDay && workout.target_pace && <DetailItem label="Target pace" value={workout.target_pace} />}
+                {!isRestDay && workout.distance_miles !== null && <DetailItem label="Distance" value={`${workout.distance_miles} miles`} />}
+                {!isRestDay && workout.duration_minutes !== null && <DetailItem label="Duration" value={`${workout.duration_minutes} minutes`} />}
+                {!isRestDay && workout.elevation_feet !== null && <DetailItem label="Elevation gain" value={`${workout.elevation_feet} feet`} />}
                 {workout.notes && <DetailItem label="Notes" value={workout.notes} full />}
-                {!workout.run_type && !workout.target_pace && workout.distance_miles === null && workout.duration_minutes === null && workout.elevation_feet === null && !workout.notes && (
-                  <p className="workout-row-meta" style={{ gridColumn: "1 / -1", padding: "12px 0" }}>No additional details were saved.</p>
+                {((isRestDay && !workout.notes) || (!isRestDay && !workout.run_type && !workout.target_pace && workout.distance_miles === null && workout.duration_minutes === null && workout.elevation_feet === null && !workout.notes)) && (
+                  <p className="workout-row-meta" style={{ gridColumn: "1 / -1", padding: "12px 0" }}>{isRestDay ? "A quiet day in your training plan." : "No additional details were saved."}</p>
                 )}
               </div>
               <div className="workout-detail-actions">

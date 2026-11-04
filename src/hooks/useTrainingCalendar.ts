@@ -15,6 +15,7 @@ export function useTrainingCalendar(weekStart: string) {
   }
 
   return {
+    workouts,
     ...summary,
     workoutsLoading: loading,
     workoutsError: error,

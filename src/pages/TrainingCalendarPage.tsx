@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { WorkoutLayout } from "../components/workouts/WorkoutLayout";
 import { useTrainingCalendar } from "../hooks/useTrainingCalendar";
-import { calendarWeekStart, isCalendarDate, localDateKey, shiftCalendarDate, validateMileageGoal } from "../lib/calendarModel";
-import { WORKOUT_STATUSES } from "../lib/workoutModel";
+import { calculateCalendarMonth, calendarWeekStart, isCalendarDate, localDateKey, shiftCalendarDate, shiftCalendarMonth, validateMileageGoal, compareCalendarWorkouts } from "../lib/calendarModel";
+import { formatWorkoutTime, WORKOUT_STATUSES } from "../lib/workoutModel";
 import { useAuth } from "../providers/AuthProvider";
 import "../calendar.css";
 
@@ -20,15 +20,16 @@ export default function TrainingCalendarPage() {
   const { session } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedDate = searchParams.get("week");
+  const view = searchParams.get("view") === "month" ? "month" : "week";
   const currentWeek = calendarWeekStart(localDateKey());
-  const weekStart = requestedDate && isCalendarDate(requestedDate)
-    ? calendarWeekStart(requestedDate)
-    : currentWeek;
+  const activeDate = requestedDate && isCalendarDate(requestedDate) ? requestedDate : currentWeek;
+  const weekStart = calendarWeekStart(activeDate);
   const viewKey = `${session?.user.id ?? ""}:${weekStart}`;
   const activeView = useRef(viewKey);
   activeView.current = viewKey;
   const {
     days,
+    workouts,
     scheduledMiles,
     completedMiles,
     workoutsLoading,
@@ -45,6 +46,13 @@ export default function TrainingCalendarPage() {
     reloadGoal,
     saveGoal,
   } = useTrainingCalendar(weekStart);
+  const visibleDays = view === "month"
+    ? calculateCalendarMonth(workouts, activeDate).days.map((day) => ({ ...day, outside: !day.inMonth }))
+    : days.map((day) => ({
+      ...day,
+      workouts: workouts.filter((workout) => workout.date === day.date).sort(compareCalendarWorkouts),
+      outside: false,
+    }));
 
   const [goalDraft, setGoalDraft] = useState("");
   const [goalMessage, setGoalMessage] = useState("");
@@ -59,12 +67,12 @@ export default function TrainingCalendarPage() {
   const pendingNavigation = movePending || goalPending;
 
   useEffect(() => {
-    if (requestedDate && (!isCalendarDate(requestedDate) || calendarWeekStart(requestedDate) !== requestedDate)) {
-      setSearchParams({ week: weekStart }, { replace: true });
+    if (requestedDate && (!isCalendarDate(requestedDate) || (view === "week" && calendarWeekStart(requestedDate) !== requestedDate))) {
+      setSearchParams({ week: view === "month" ? localDateKey() : weekStart, ...(view === "month" ? { view } : {}) }, { replace: true });
     } else if (!requestedDate) {
-      setSearchParams({ week: weekStart }, { replace: true });
+      setSearchParams({ week: weekStart, ...(view === "month" ? { view } : {}) }, { replace: true });
     }
-  }, [requestedDate, setSearchParams, weekStart]);
+  }, [requestedDate, setSearchParams, weekStart, view]);
 
   useEffect(() => {
     setMoveDates({});
@@ -87,7 +95,16 @@ export default function TrainingCalendarPage() {
 
   function navigateWeek(key: string) {
     if (pendingNavigation) return;
-    setSearchParams({ week: key });
+    setSearchParams({ week: key, ...(view === "month" ? { view } : {}) });
+  }
+
+  function navigatePeriod(amount: number) {
+    if (pendingNavigation) return;
+    navigateWeek(view === "month" ? shiftCalendarMonth(activeDate, amount) : shiftCalendarDate(weekStart, amount * 7));
+  }
+
+  function selectView(nextView: "week" | "month") {
+    setSearchParams({ week: nextView === "month" ? activeDate : weekStart, ...(nextView === "month" ? { view: nextView } : {}) });
   }
 
   function submitGoal(event: FormEvent<HTMLFormElement>) {
@@ -151,15 +168,22 @@ export default function TrainingCalendarPage() {
             <p>Plan the week, keep the miles in view.</p>
           </div>
           <nav className="calendar-week-nav" aria-label="Calendar week">
-            <button className="calendar-button" type="button" onClick={() => navigateWeek(shiftCalendarDate(weekStart, -7))} disabled={pendingNavigation} aria-label="Previous week">Previous week</button>
-            <button className="calendar-button" type="button" onClick={() => navigateWeek(calendarWeekStart())} disabled={pendingNavigation}>This week</button>
-            <button className="calendar-button" type="button" onClick={() => navigateWeek(shiftCalendarDate(weekStart, 7))} disabled={pendingNavigation} aria-label="Next week">Next week</button>
+            <button className="calendar-button" type="button" onClick={() => navigatePeriod(-1)} disabled={pendingNavigation} aria-label={view === "month" ? "Previous month" : "Previous week"}>{view === "month" ? "Previous month" : "Previous week"}</button>
+            <button className="calendar-button" type="button" onClick={() => navigateWeek(calendarWeekStart())} disabled={pendingNavigation} aria-label="Current week">Current week</button>
+            <button className="calendar-button" type="button" onClick={() => navigatePeriod(1)} disabled={pendingNavigation} aria-label={view === "month" ? "Next month" : "Next week"}>{view === "month" ? "Next month" : "Next week"}</button>
           </nav>
         </header>
 
-        <p className="calendar-period" aria-live="polite">Monday – Sunday · {formatWeekRange(weekStart)}</p>
+        <div className="calendar-view-controls">
+          <p className="calendar-period" aria-live="polite">{view === "week" ? `Monday – Sunday · ${formatWeekRange(weekStart)}` : formatDate(activeDate, { month: "long", year: "numeric" })}</p>
+          <div className="calendar-view-switch" role="group" aria-label="Calendar view">
+            <button type="button" aria-pressed={view === "week"} onClick={() => selectView("week")}>Week</button>
+            <button type="button" aria-pressed={view === "month"} onClick={() => selectView("month")}>Month</button>
+          </div>
+        </div>
 
         <section className="calendar-overview" aria-label="Weekly training summary">
+          {view === "month" && <p className="calendar-summary-scope">Goal and running totals are for the selected Monday week: {formatWeekRange(weekStart)}.</p>}
           <div className="calendar-goal-panel">
             <div className="calendar-goal-intro">
               <span>Weekly mileage goal</span>
@@ -226,14 +250,24 @@ export default function TrainingCalendarPage() {
           </div>
         )}
 
-        <section className="calendar-week-grid" aria-label={`Workouts for the week of ${formatDate(weekStart, { month: "long", day: "numeric" })}`}>
-          {days.map((day) => {
+        <section className={`calendar-week-grid${view === "month" ? " calendar-week-grid--month" : ""}`} aria-label={view === "week" ? `Workouts for the week of ${formatDate(weekStart, { month: "long", day: "numeric" })}` : `Workouts for ${formatDate(activeDate, { month: "long", year: "numeric" })}`}>
+          {visibleDays.map((day) => {
             const today = day.date === localDateKey();
             return (
-              <section className={`calendar-day${today ? " calendar-day--today" : ""}`} aria-label={day.label} data-date={day.date} key={day.date}>
+              <section className={`calendar-day${today ? " calendar-day--today" : ""}${day.outside ? " calendar-day--outside" : ""}`} aria-label={day.label} data-date={day.date} key={day.date}>
                 <header className="calendar-day-header">
                   <span>{formatDate(day.date, { weekday: "long" })}{today ? " · Today" : ""}</span>
-                  <strong>{formatDate(day.date, { month: "short", day: "numeric" })}</strong>
+                  <strong>
+                    <button
+                      className="calendar-day-date-select"
+                      type="button"
+                      onClick={() => navigateWeek(day.date)}
+                      aria-label={`Select ${day.label} for weekly summary`}
+                      aria-pressed={view === "month" && day.date === activeDate}
+                    >
+                      {formatDate(day.date, { month: "short", day: "numeric" })}
+                    </button>
+                  </strong>
                 </header>
                 <div className="calendar-day-content">
                   {workoutsLoading ? (
@@ -246,9 +280,10 @@ export default function TrainingCalendarPage() {
                     const feedback = moveMessages[workout.id];
                     const isOpen = openReschedule === workout.id;
                     return (
-                      <article className={`calendar-workout calendar-workout--${workout.status}`} data-workout-id={workout.id} key={workout.id}>
-                        <span className="calendar-workout-type">{workout.workout_type?.name ?? "Workout"}</span>
+                      <article className={`calendar-workout calendar-workout--${workout.status}${workout.workout_type?.name === "Rest Day" ? " calendar-workout--rest" : ""}`} data-workout-id={workout.id} key={workout.id}>
+                        <span className="calendar-workout-type">{workout.workout_type?.name === "Rest Day" ? "Rest Day" : workout.workout_type?.name ?? "Workout"}</span>
                         <Link className="calendar-workout-title" to={`/app/workouts/${workout.id}`}>{workout.title}</Link>
+                        <span className="calendar-workout-time">{formatWorkoutTime(workout.scheduled_start_time)}</span>
                         <span className={`calendar-status calendar-status--${workout.status}`}>{statusLabel(workout.status)}</span>
                         <div className="calendar-reschedule">
                           <button
@@ -289,8 +324,9 @@ export default function TrainingCalendarPage() {
                       </article>
                     );
                   })}
-                  <div className="calendar-add-day">
+                  <div className="calendar-day-actions">
                     <Link className="calendar-link" to={`/app/workouts/new?date=${day.date}`} aria-label={`Add workout on ${day.date}`}>+ Add workout</Link>
+                    <Link className="calendar-link" to={`/app/workouts/new?date=${day.date}&activity=rest`} aria-label={`Add rest day on ${day.date}`}>+ Add rest day</Link>
                   </div>
                 </div>
               </section>

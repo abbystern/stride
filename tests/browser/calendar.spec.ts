@@ -33,7 +33,7 @@ test("calendar: Monday–Sunday navigation, all statuses and activities, owner i
   await page.getByRole("button", { name: "Next week", exact: true }).click();
   await page.getByRole("button", { name: "Next week", exact: true }).click();
   await expect(page.getByTestId("scheduled-mileage")).toHaveText("8.0");
-  await page.getByRole("button", { name: "This week", exact: true }).click();
+  await page.getByRole("button", { name: "Current week", exact: true }).click();
   await expect(page.getByTestId("scheduled-mileage")).toHaveText("6.0");
   await page.getByRole("link", { name: "Finished run", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/app/workouts/${completed.id}$`));

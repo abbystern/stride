@@ -2,3 +2,5 @@
 - [Browser test runtime](browser-test-runtime.md) — on Replit/Nix, prefer the available system browser over stock Playwright downloads.
 - [Supabase migration rollout](supabase-migration-rollout.md) — isolate new schema dependencies until manually applied SQL is available; keep established routes working.
 - [Preview server conflicts](preview-server-conflicts.md) — check duplicate Vite processes before changing React for preview hook/import errors.
+- [Calendar usability feedback](calendar-usability-feedback.md) — first-time athlete testing requested explicit rest days and easier calendar planning.
+- [Supabase query typing](supabase-query-typing.md) — check SDK builder return types; preserve owner filters and cardinality when narrowing results.

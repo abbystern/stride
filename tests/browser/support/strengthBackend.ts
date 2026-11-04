@@ -60,6 +60,7 @@ export async function strengthBackend(page: Page, signIn = true) {
       let row = body.p_workout_id ? base.rows.find((item) => item.id === body.p_workout_id && item.user_id === owner)! : null;
       if (!row) { row = entry({ workout_type_id: activity.id, title: template.name, date: body.p_date, status: "in_progress" }); base.rows.push(row); }
       row.status = "in_progress";
+      row.template_id = template.id;
       for (const item of template.template_exercises) for (let n = 1; n <= item.target_sets; n++) state.sets.push({
         id: crypto.randomUUID(), workout_id: row.id, exercise_id: item.exercise_id, exercise_name: item.exercise.name,
         position: item.position, target_sets: item.target_sets, rep_min: item.rep_min, rep_max: item.rep_max, notes: item.notes,

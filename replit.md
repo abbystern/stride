@@ -88,3 +88,16 @@
 
 Nutrition, recovery, external wearable imports, automatic recommendations,
 and advanced progression charts remain intentionally excluded.
+
+## Calendar usability improvements
+
+- Apply migration 006 manually after 001–005. Dates and optional local
+  wall-clock times are stored separately; never convert planning times to UTC.
+- Calendar defaults to Monday–Sunday, adds a month view, and uses readable
+  stacked date cells on mobile. Mileage goals/totals always refer to the
+  selected Monday week, including in month mode.
+- Rest Day uses the existing workouts CRUD and owner-only RLS, not a separate
+  schedule. Rest days have no training metrics or strength template and never
+  contribute to completed-workout statistics, mileage, or pace.
+- See `prompts/calendar-improvements.md` for the original prompt, usability
+  motivation, implementation decisions, verification, and manual checks.

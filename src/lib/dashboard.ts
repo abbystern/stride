@@ -36,6 +36,7 @@ function emptyTotals() {
 
 /** Called only for completed entries; weekly and overall use identical eligibility. */
 function addCompletedWorkout(totals: ReturnType<typeof emptyTotals>, workout: DashboardWorkout) {
+  if (workout.workout_type?.name === "Rest Day") return;
   totals.completedWorkouts++;
   if (workout.workout_type?.name !== "Running") return;
   if (validMeasurement(workout.distance_miles)) totals.runningMileage += workout.distance_miles;
