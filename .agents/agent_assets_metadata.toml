@@ -14,3 +14,17 @@ mtime_ms = 1793831534216
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/fefcc410-b0af-492c-b446-08ecb8ced24e/ddca54c8-9f69-492c-b45b-9b3ed70a8410"
 storage_version_token = "1793831571035841"
 content_type = "image/png"
+
+[[outputs]]
+id = "xuvLWTyhco3vHtWTMUEKz"
+uri = "file://docs/test-evidence/data-isolation-pass.png"
+type = "image"
+title = "Screenshot 2 — Data isolation passes"
+description = "Actual local PostgreSQL output: all five isolation checks pass with the unchanged production migration policies; test exit code 0."
+logical_id = "5dd1c2d2-a9e5-40a8-a8e3-942aed0a24f8"
+content_hash = "sha256:8c1a71c8249a3cd5a2dedcfc8ffaea605694d7b780bff9aa342e24e6ec77a096"
+size = 102590
+mtime_ms = 1793831617077
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/5dd1c2d2-a9e5-40a8-a8e3-942aed0a24f8/9ec1e039-4a8d-4392-adf0-361dba71ac25"
+storage_version_token = "1793831630280909"
+content_type = "image/png"

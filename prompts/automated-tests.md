@@ -180,4 +180,9 @@ When you're finished, give me:
   defect exposed one A row to B (expected zero), producing test exit code 3.
   Other assertions passed and A's row stayed unchanged. The temporary cluster
   was destroyed automatically; production policies/source remain untouched.
-  Paused for user confirmation before screenshot 2.
+  User confirmed screenshot 1 was captured before proceeding.
+- Screenshot 2 generated: `docs/test-evidence/data-isolation-pass.png`,
+  with its actual-output `.txt` transcript. The unmodified migration policies
+  passed all five isolation checks, with test exit code 0. B read/updated/deleted
+  zero A rows, and A's full original row remained unchanged.
+  Paused for user confirmation before screenshot 3.
