@@ -191,4 +191,9 @@ When you're finished, give me:
   admitted the planned 8-mile run and failed the unchanged assertion:
   actual 23, expected 15, test exit code 1. Temporary copies were deleted;
   production source remains correct and untouched.
-  Paused for user confirmation before screenshot 4.
+  User confirmed screenshot 3 was captured before proceeding.
+- Screenshot 4 generated: `docs/test-evidence/dashboard-pass.png`,
+  with its actual-output `.txt` transcript. The real, unmodified dashboard
+  function passed the 15-mile assertion, with test exit code 0.
+  Paused for user confirmation before final full-suite/build verification
+  and commit/push.

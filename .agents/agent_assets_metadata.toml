@@ -42,3 +42,17 @@ mtime_ms = 1793831665233
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/1ab9ef8e-e2d8-42f1-a666-52e2a6e37a71/b96addce-3d58-43e7-b09c-f7935c038753"
 storage_version_token = "1793831685448215"
 content_type = "image/png"
+
+[[outputs]]
+id = "YgbzR6GxPqZWsW1wJtU54"
+uri = "file://docs/test-evidence/dashboard-pass.png"
+type = "image"
+title = "Screenshot 4 — Dashboard mileage passes"
+description = "Actual test output: the unchanged production calculation totals 15 miles, excluding the planned run and non-running activities. Test exit code 0."
+logical_id = "732b0e75-82c1-47bd-ab56-4b3246fc2926"
+content_hash = "sha256:4924afd173802b6901aaee06d7aecb733738a9e7d8e39aa71067de35ccc3374e"
+size = 56915
+mtime_ms = 1793831722189
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/732b0e75-82c1-47bd-ab56-4b3246fc2926/7a2f50c6-acaa-43d3-81ef-cd4541c9edc5"
+storage_version_token = "1793831735944260"
+content_type = "image/png"
