@@ -37,4 +37,17 @@
   pairs, anonymous denial, unchanged workout policies, and cascading deletion.
 - Browser tests remain intercepted API-contract tests, not live Supabase tests.
 
+## Search, filter, and sort
+
+- Feature 6 adds live title search, activity/status filters, and three sort
+  orders to workout history. Clear search affects only text; Clear filters also
+  resets both selects and the default newest-first order.
+- Filtering uses the authenticated user's loaded workouts. Data loads in
+  owner-scoped pages to include records beyond Supabase's response-size limit.
+- No new database migration or RLS changes are needed.
+- Run `npm run test:workout-filters` for filtering/sorting unit tests.
+- Browser verification can use `npm run test:workout-ui -- --trace off` to avoid
+  Vite reloads from generated trace HTML.
+- See `prompts/search-filter.md` for the original prompt and manual checks.
+
 Dashboards, weekly planning, lifting templates, nutrition, and recovery are intentionally not included.

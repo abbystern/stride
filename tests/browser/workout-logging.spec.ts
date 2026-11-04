@@ -26,6 +26,9 @@ async function backend(page: Page, signIn = true) {
     rows: [] as RecordData[],
     createCalls: 0, deleteCalls: 0, failWrite: false, failDelete: false,
     failRead: false,
+    workoutReadCalls: 0,
+    workoutResponseCap: Infinity,
+    failTypesRead: false,
     stars: new Set<string>(),
     starWriteCalls: 0,
     failStarWrite: false,
@@ -94,6 +97,9 @@ async function backend(page: Page, signIn = true) {
       return route.fulfill({ status: 204 });
     }
     if (url.pathname.endsWith("/workout_types")) {
+      if (state.failTypesRead) return route.fulfill({
+        status: 400, json: { code: "PGRST000", message: "Fixture: activity request failure" },
+      });
       return route.fulfill({ json: activities });
     }
     expect(url.pathname.endsWith("/workouts")).toBe(true);
@@ -105,11 +111,25 @@ async function backend(page: Page, signIn = true) {
       expect(url.searchParams.get("user_id")).toBe(`eq.${owner}`);
     }
     if (method === "GET") {
+      state.workoutReadCalls++;
       if (state.failRead) return route.fulfill({
         status: 404, json: { code: "PGRST205", message: "Fixture: missing table" },
       });
+      const rows = state.rows.filter((row) => row.user_id === owner && (!id || row.id === id))
+        .sort((a, b) =>
+          String(b.date).localeCompare(String(a.date)) ||
+          String(b.created_at).localeCompare(String(a.created_at)) ||
+          String(a.id).localeCompare(String(b.id)),
+        );
+      const offset = Number(url.searchParams.get("offset") ?? 0);
+      const limit = Math.min(Number(url.searchParams.get("limit") ?? rows.length), state.workoutResponseCap);
+      const page = rows.slice(offset, offset + limit);
       return route.fulfill({
-        json: state.rows.filter((row) => row.user_id === owner && (!id || row.id === id)).map(joined),
+        headers: {
+          "content-range": page.length ? `${offset}-${offset + page.length - 1}/${rows.length}` : `*/${rows.length}`,
+          "access-control-expose-headers": "content-range",
+        },
+        json: page.map(joined),
       });
     }
     if (method === "POST") {
@@ -258,7 +278,7 @@ test("editing activity clears hidden running-only fields and preserves zero valu
   expect(state.rows[0].target_pace).toBeNull();
   expect(state.rows[0].elevation_feet).toBe(0);
   await page.getByRole("link", { name: "History", exact: true }).click();
-  await expect(page.getByText("Walking", { exact: true })).toBeVisible();
+  await expect(page.locator(".workout-list").getByText("Walking", { exact: true })).toBeVisible();
   await expect(page.getByText("4 mi", { exact: true })).toBeVisible();
   expect(state.pageErrors).toEqual([]);
 });
@@ -405,5 +425,113 @@ test("stars: workout deletion clears favorites and private workout IDs stay hidd
   await expect(page.locator(".starred-empty")).toBeVisible();
   await page.reload();
   await expect(page.locator(".starred-empty")).toBeVisible();
+  expect(state.pageErrors).toEqual([]);
+});
+
+function searchRows() {
+  return [
+    { title: "Easy Run", date: "2026-11-08", status: "planned", distance_miles: 3 },
+    { title: "Morning TEMPO", date: "2026-11-01", status: "completed", distance_miles: 6 },
+    { title: "Tempo ride", date: "2026-11-05", status: "completed", distance_miles: 12, workout_type_id: activities[2].id },
+    { title: "Recovery", date: "2026-10-31", status: "in_progress", distance_miles: null },
+    { title: "Walk", date: "2026-11-06", status: "completed", distance_miles: 0, workout_type_id: activities[5].id },
+    { title: "Other workout", date: "2026-11-09", status: "planned", distance_miles: null, workout_type_id: activities[7].id },
+  ].map((fields, index) => record({
+    id: `aaaaaaaa-aaaa-4aaa-8aaa-${String(index + 1).padStart(12, "0")}`, ...fields,
+  }));
+}
+
+test("search/filter: live title search, combined filters, separate clear actions and stars", async ({ page }) => {
+  const state = await backend(page);
+  state.rows.push(...searchRows(), record({ user_id: otherOwner, title: "Private TEMPO" }));
+  await page.goto("/app/workouts");
+  const titles = page.locator(".workout-row-title");
+  await expect(titles).toHaveText(["Other workout", "Easy Run", "Walk", "Tempo ride", "Morning TEMPO", "Recovery"]);
+  const reads = state.workoutReadCalls;
+  await expect(page.getByLabel("Activity type", { exact: true }).locator("option")).toHaveCount(9);
+  await expect(page.getByLabel("Workout status", { exact: true }).locator("option")).toHaveCount(4);
+  await page.getByLabel("Search workouts", { exact: true }).fill("tEmPo");
+  await expect(titles).toHaveText(["Tempo ride", "Morning TEMPO"]);
+  await expect(page.getByLabel("Search workouts", { exact: true })).toBeFocused();
+  await page.getByLabel("Activity type", { exact: true }).selectOption(activities[0].id);
+  await page.getByLabel("Workout status", { exact: true }).selectOption("planned");
+  await expect(page.getByText("No workouts match your search. Try adjusting your filters.", { exact: true })).toBeVisible();
+  await page.getByLabel("Workout status", { exact: true }).selectOption("completed");
+  await expect(titles).toHaveText(["Morning TEMPO"]);
+  await page.getByLabel("Sort by", { exact: true }).selectOption("distance");
+  await page.getByRole("button", { name: "Star Morning TEMPO", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Unstar Morning TEMPO", exact: true })).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath("search-filter.png"), fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.getByRole("button", { name: "Clear search", exact: true }).click();
+  await expect(page.getByLabel("Search workouts", { exact: true })).toHaveValue("");
+  await expect(page.getByLabel("Activity type", { exact: true })).toHaveValue(activities[0].id);
+  await expect(page.getByLabel("Workout status", { exact: true })).toHaveValue("completed");
+  await expect(page.getByLabel("Sort by", { exact: true })).toHaveValue("distance");
+  await page.getByLabel("Search workouts", { exact: true }).fill("does not exist");
+  await page.getByRole("button", { name: "Clear filters", exact: true }).first().click();
+  await expect(page.getByLabel("Activity type", { exact: true })).toHaveValue("");
+  await expect(page.getByLabel("Workout status", { exact: true })).toHaveValue("");
+  await expect(page.getByLabel("Sort by", { exact: true })).toHaveValue("newest");
+  await expect(titles).toHaveCount(6);
+  expect(state.workoutReadCalls).toBe(reads);
+  await page.getByLabel("Search workouts", { exact: true }).fill("tempo");
+  await page.getByRole("link", { name: /^Open Morning TEMPO,/ }).click();
+  await expect(page.getByRole("heading", { name: "Morning TEMPO", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Unstar Morning TEMPO", exact: true })).toBeVisible();
+  expect(state.pageErrors).toEqual([]);
+});
+
+test("search/filter: each sort works, null distances follow zero, and search treats symbols literally", async ({ page }) => {
+  const state = await backend(page);
+  state.rows.push(...searchRows());
+  await page.goto("/app/workouts");
+  const titles = page.locator(".workout-row-title");
+  await expect(page.getByLabel("Sort by", { exact: true })).toHaveValue("newest");
+  await expect(titles).toHaveText(["Other workout", "Easy Run", "Walk", "Tempo ride", "Morning TEMPO", "Recovery"]);
+  await page.getByLabel("Sort by", { exact: true }).selectOption("oldest");
+  await expect(titles).toHaveText(["Recovery", "Morning TEMPO", "Tempo ride", "Walk", "Easy Run", "Other workout"]);
+  await page.getByLabel("Sort by", { exact: true }).selectOption("distance");
+  await expect(titles).toHaveText(["Tempo ride", "Morning TEMPO", "Easy Run", "Walk", "Other workout", "Recovery"]);
+  await page.getByLabel("Workout status", { exact: true }).selectOption("completed");
+  await expect(titles).toHaveText(["Tempo ride", "Morning TEMPO", "Walk"]);
+  state.rows.push(record({ id: crypto.randomUUID(), title: "100% _TEMPO* trail", date: "2026-11-04" }));
+  await page.reload();
+  await page.getByLabel("Search workouts", { exact: true }).fill("% _tempo*");
+  await expect(titles).toHaveText(["100% _TEMPO* trail"]);
+  expect(state.pageErrors).toEqual([]);
+});
+
+test("search/filter: older matches beyond 1000 rows load despite a smaller response cap", async ({ page }) => {
+  const state = await backend(page);
+  state.workoutResponseCap = 100;
+  for (let index = 0; index < 1001; index++) {
+    state.rows.push(record({ id: crypto.randomUUID(), title: `Archive session ${index}`, date: "2026-11-01" }));
+  }
+  state.rows.push(record({ id: crypto.randomUUID(), title: "Archive target", date: "2020-01-01" }));
+  await page.goto("/app/workouts");
+  await page.getByLabel("Search workouts", { exact: true }).fill("Archive target");
+  await expect(page.locator(".workout-row-title")).toHaveText(["Archive target"]);
+  expect(state.workoutReadCalls).toBeGreaterThan(2);
+  expect(state.pageErrors).toEqual([]);
+});
+
+test("search/filter: activity load errors allow other controls and can retry without losing search", async ({ page }) => {
+  const state = await backend(page);
+  state.rows.push(...searchRows());
+  state.failTypesRead = true;
+  await page.goto("/app/workouts");
+  await expect(page.getByRole("alert")).toContainText("Activity types couldn’t load");
+  await expect(page.getByLabel("Activity type", { exact: true })).toBeDisabled();
+  await page.getByLabel("Search workouts", { exact: true }).fill("tempo");
+  await page.getByLabel("Workout status", { exact: true }).selectOption("completed");
+  await page.getByLabel("Sort by", { exact: true }).selectOption("oldest");
+  await expect(page.locator(".workout-row-title")).toHaveText(["Morning TEMPO", "Tempo ride"]);
+  state.failTypesRead = false;
+  await page.getByRole("button", { name: "Retry activity types", exact: true }).click();
+  await expect(page.getByLabel("Activity type", { exact: true })).toBeEnabled();
+  await expect(page.getByLabel("Search workouts", { exact: true })).toHaveValue("tempo");
+  await page.getByLabel("Activity type", { exact: true }).selectOption(activities[0].id);
+  await expect(page.locator(".workout-row-title")).toHaveText(["Morning TEMPO"]);
   expect(state.pageErrors).toEqual([]);
 });
