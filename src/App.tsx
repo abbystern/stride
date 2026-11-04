@@ -20,6 +20,7 @@ const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const TrainingCalendarPage = lazy(() => import("./pages/TrainingCalendarPage"));
 const StrengthTemplatesPage = lazy(() => import("./pages/strength/StrengthTemplatesPage"));
 const StrengthSessionPage = lazy(() => import("./pages/strength/StrengthSessionPage"));
+const RecoveryPage = lazy(() => import("./pages/RecoveryPage"));
 
 function LoadingScreen() {
   return (
@@ -75,6 +76,7 @@ export default function App() {
         <Route index element={<AccountPage />} />
         <Route path="dashboard" element={<Suspense fallback={<LoadingScreen />}><DashboardPage /></Suspense>} />
         <Route path="calendar" element={<Suspense fallback={<LoadingScreen />}><TrainingCalendarPage /></Suspense>} />
+        <Route path="recovery" element={<Suspense fallback={<LoadingScreen />}><RecoveryPage /></Suspense>} />
         <Route path="strength" element={<Suspense fallback={<LoadingScreen />}><StrengthTemplatesPage /></Suspense>} />
         <Route path="stars" element={<StarredWorkoutsPage />} />
         <Route path="workouts" element={<WorkoutHistoryPage />} />

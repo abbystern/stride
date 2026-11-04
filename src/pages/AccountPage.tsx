@@ -62,6 +62,7 @@ export default function AccountPage() {
           <div className="home-nav-actions">
             <Link to="/app/dashboard"><ChartNoAxesColumnIncreasing size={15} aria-hidden="true" /> Training dashboard</Link>
             <Link to="/app/calendar"><CalendarDays size={15} aria-hidden="true" /> Training calendar</Link>
+            <Link to="/app/recovery">Recovery</Link>
             <Link to="/app/strength"><Dumbbell size={15} aria-hidden="true" /> Strength training</Link>
             <Link to="/app/workouts"><BookOpen size={15} aria-hidden="true" /> Workout history</Link>
             <Link to="/app/stars"><Star size={15} aria-hidden="true" /> Starred workouts</Link>
