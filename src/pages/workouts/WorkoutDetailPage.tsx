@@ -73,6 +73,11 @@ export default function WorkoutDetailPage() {
               </div>
               <div className="workout-detail-actions">
                 <StarButton workoutId={workout.id} title={workout.title} />
+                {workout.workout_type?.name === "Strength Training" && (
+                  <Link to={`/app/workouts/${workout.id}/strength`} className="workout-secondary">
+                    {workout.status === "completed" ? "View strength results" : "Track strength workout"}
+                  </Link>
+                )}
                 <Link to={`/app/workouts/${workout.id}/edit`} className="workout-secondary"><Pencil size={15} aria-hidden="true" /> Edit workout</Link>
                 <button type="button" className="workout-danger" onClick={() => { setConfirming(true); clearError(); }} disabled={pending}>
                   <Trash2 size={15} aria-hidden="true" /> Delete

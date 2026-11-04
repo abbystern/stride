@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CalendarDays, LogOut, Star } from "lucide-react";
+import { CalendarDays, Dumbbell, LogOut, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { BookOpen, Plus, ChartNoAxesColumnIncreasing } from "lucide-react";
 import { BrandMark } from "../components/BrandMark";
@@ -62,6 +62,7 @@ export default function AccountPage() {
           <div className="home-nav-actions">
             <Link to="/app/dashboard"><ChartNoAxesColumnIncreasing size={15} aria-hidden="true" /> Training dashboard</Link>
             <Link to="/app/calendar"><CalendarDays size={15} aria-hidden="true" /> Training calendar</Link>
+            <Link to="/app/strength"><Dumbbell size={15} aria-hidden="true" /> Strength training</Link>
             <Link to="/app/workouts"><BookOpen size={15} aria-hidden="true" /> Workout history</Link>
             <Link to="/app/stars"><Star size={15} aria-hidden="true" /> Starred workouts</Link>
             <Link to="/app/workouts/new"><Plus size={15} aria-hidden="true" /> Log a workout</Link>

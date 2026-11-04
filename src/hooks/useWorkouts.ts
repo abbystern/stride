@@ -14,9 +14,10 @@ import type { Workout, WorkoutPayload, WorkoutType } from "../lib/workoutModel";
 
 export const WORKOUTS_CHANGED_EVENT = "stride:workouts-changed";
 
-function useResource<T>(
+export function useResource<T>(
   load: (userId: string, signal: AbortSignal) => Promise<T>,
   initial: T,
+  errorMessage: (error: unknown) => string = workoutErrorMessage,
 ) {
   const { session } = useAuth();
   const userId = session?.user.id;
@@ -35,12 +36,12 @@ function useResource<T>(
       },
       (error) => {
         if (!controller.signal.aborted) {
-          setState({ owner: userId, loader: load, data: initial, loading: false, error: workoutErrorMessage(error) });
+          setState({ owner: userId, loader: load, data: initial, loading: false, error: errorMessage(error) });
         }
       },
     );
     return () => controller.abort();
-  }, [userId, load, revision, initial]);
+  }, [userId, load, revision, initial, errorMessage]);
   const current = state.owner === userId && state.loader === load;
   return {
     data: current ? state.data : initial,
