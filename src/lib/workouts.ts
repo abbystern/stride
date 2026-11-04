@@ -46,16 +46,28 @@ export async function listWorkoutTypes(signal?: AbortSignal): Promise<WorkoutTyp
 }
 
 export async function listWorkouts(userId: string, signal?: AbortSignal): Promise<Workout[]> {
-  const query = client()
-    .from("workouts")
-    .select(selection)
-    .eq("user_id", userId)
-    .order("date", { ascending: false })
-    .order("created_at", { ascending: false });
-  const { data, error } = await (signal ? query.abortSignal(signal) : query)
-    .overrideTypes<Workout[], { merge: false }>();
-  if (error) throw error;
-  return data;
+  // Search must include records beyond Supabase's default response-size cap.
+  // Exact RLS-scoped counts also handle projects with a smaller per-query cap.
+  const workouts: Workout[] = [];
+  const pageSize = 500;
+  while (true) {
+    const query = client()
+      .from("workouts")
+      .select(selection, { count: "exact" })
+      .eq("user_id", userId)
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .order("id")
+      .range(workouts.length, workouts.length + pageSize - 1);
+    const { data, count, error } = await (signal ? query.abortSignal(signal) : query)
+      .overrideTypes<Workout[], { merge: false }>();
+    if (error) throw error;
+    workouts.push(...data);
+    if (
+      data.length === 0 ||
+      (count !== null ? workouts.length >= count : data.length < pageSize)
+    ) return workouts;
+  }
 }
 
 export async function getWorkout(id: string, userId: string, signal?: AbortSignal): Promise<Workout | null> {
