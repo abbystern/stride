@@ -233,3 +233,27 @@ Results on November 4, 2026:
 The implementation remains on `feature/strength-tracker`. Only that branch is
 to be committed/pushed; no merge or commit on main is included. The final
 conversation response reports the actual Git delivery result.
+
+## Preview runtime follow-up
+
+User prompt — verbatim:
+
+> The Start application artifact crashed with a runtime error, please debug and fix it.
+
+Diagnosis and fix — summary:
+
+- Browser logs reported an invalid hook call and a failed dynamic import of
+  the strength templates page. React and React DOM had matching, deduplicated
+  installed versions.
+- Two Vite processes were running. The newer process fell back to port 5001
+  while the preview still used port 5000.
+- Stopped the managed workflow and the remaining orphaned Vite process, then
+  restarted one managed server on port 5000.
+- Configured Vite's host, port 5000, and `strictPort: true` so future conflicts
+  fail clearly rather than silently changing ports. The restricted
+  `.replit.dev` host allowlist, authentication, and Supabase logic are unchanged.
+- Build passed. Four desktop/mobile browser checks passed for strength page
+  loading, saved progress after refresh, completion, prior results, and
+  protected-route handling, using synthetic Supabase responses. A fresh public
+  preview loaded the expected sign-in screen without the runtime error.
+- Reload an already-open preview to discard its old development module state.
