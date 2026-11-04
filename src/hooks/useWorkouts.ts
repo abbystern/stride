@@ -11,6 +11,8 @@ import {
 } from "../lib/workouts";
 import type { Workout, WorkoutPayload, WorkoutType } from "../lib/workoutModel";
 
+export const WORKOUTS_CHANGED_EVENT = "stride:workouts-changed";
+
 function useResource<T>(
   load: (userId: string, signal: AbortSignal) => Promise<T>,
   initial: T,
@@ -85,7 +87,9 @@ export function useWorkoutMutations() {
     setPending(true);
     setError("");
     try {
-      return await operation(userId);
+      const result = await operation(userId);
+      window.dispatchEvent(new Event(WORKOUTS_CHANGED_EVENT));
+      return result;
     } catch (cause) {
       const message = workoutErrorMessage(cause);
       setError(message);

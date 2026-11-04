@@ -8,6 +8,7 @@
     "preview": "vite preview --host 0.0.0.0 --port 5000",
     "test:workout-validation": "node --experimental-strip-types --test tests/workout-validation.test.ts",
     "test:workout-filters": "node --experimental-strip-types --test tests/workout-filters.test.ts",
+    "test:dashboard": "node --experimental-strip-types --test tests/dashboard.test.ts",
     "test:workout-ui": "playwright test"
   },
   "repository": {
@@ -33,6 +34,7 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.5",
+    "recharts": "^3.10.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.5"
   }

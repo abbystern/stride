@@ -50,4 +50,22 @@
   Vite reloads from generated trace HTML.
 - See `prompts/search-filter.md` for the original prompt and manual checks.
 
-Dashboards, weekly planning, lifting templates, nutrition, and recovery are intentionally not included.
+## Training dashboard
+
+- Feature 7 is available at `/app/dashboard` via home actions and main navigation.
+- This week and Overall sections show matching metrics for the local calendar
+  week and all dates respectively; the chart remains a six-week view.
+- `calculateDashboard` is independent of Supabase and uses local Monday–Sunday
+  calendar weeks. All three cards cover the current week; the Recharts view
+  includes that week and the five preceding weeks.
+- Only completed Running contributes mileage/pace. Pace uses total valid
+  duration divided by total matched distance; completed-workout counts include
+  all activities. Unknown pace displays an em dash, not zero.
+- The dashboard reuses owner-scoped workout loading with unchanged RLS. It
+  refreshes on mount/reload, successful local mutations, focus/visibility return,
+  a Refresh button, and once per minute while visible.
+- Run `npm run test:dashboard`; see `prompts/dashboard.md` for the focused
+  required test, genuine failing/passing screenshot instructions, and manual
+  checks. No new database migration is required.
+
+Weekly planning, lifting templates, nutrition, and recovery are intentionally not included.
