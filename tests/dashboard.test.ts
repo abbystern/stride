@@ -53,6 +53,81 @@ test("pace uses total valid duration / total valid distance, not mean individual
   assert.equal(formatRunningPace(result.averagePace), "9:00");
 });
 
+test("pace regression: a completed 5-mile run in 50 minutes gives 10:00/mi", () => {
+  const result = calculateDashboard([run(5, { duration_minutes: 50 })], wednesday);
+  assert.equal(result.averagePace, 10);
+  assert.equal(formatRunningPace(result.averagePace), "10:00");
+  assert.equal(result.paceWorkoutCount, 1);
+});
+
+test("pace regression: adding a 2-mile walk in 40 minutes does not change running pace or chart mileage", () => {
+  const result = calculateDashboard([
+    run(5, { duration_minutes: 50 }),
+    run(2, { duration_minutes: 40, workout_type: { id: "walking", name: "Walking" } }),
+  ], wednesday);
+  assert.equal(formatRunningPace(result.averagePace), "10:00");
+  assert.equal(result.averagePace, 10);
+  assert.equal(result.paceWorkoutCount, 1);
+  assert.equal(result.weeklyMileage, 5);
+  assert.equal(result.weeks[5].miles, 5);
+  assert.equal(result.completedWorkouts, 2);
+});
+
+test("pace regression: adding planned and in-progress runs cannot change actual pace or mileage", () => {
+  const result = calculateDashboard([
+    run(5, { duration_minutes: 50 }),
+    run(8, { duration_minutes: 32, status: "planned" }),
+    run(3, { duration_minutes: 12, status: "in_progress" }),
+  ], wednesday);
+  assert.equal(result.averagePace, 10);
+  assert.equal(formatRunningPace(result.averagePace), "10:00");
+  assert.equal(result.paceWorkoutCount, 1);
+  assert.equal(result.weeklyMileage, 5);
+  assert.equal(result.weeks[5].miles, 5);
+  assert.equal(result.completedWorkouts, 1);
+});
+
+test("pace regression: 5 miles in 50 minutes plus 3 miles in 27 minutes gives 9:38/mi", () => {
+  const result = calculateDashboard([
+    run(5, { duration_minutes: 50 }), run(3, { duration_minutes: 27 }),
+  ], wednesday);
+  assert.equal(result.averagePace, 77 / 8);
+  assert.equal(result.paceWorkoutCount, 2);
+  assert.equal(result.paceDurationMinutes, 77);
+  assert.equal(result.paceDistanceMiles, 8);
+  assert.equal(formatRunningPace(result.averagePace), "9:38");
+});
+
+test("pace regression: every non-running activity with a different pace is excluded in all chart weeks", () => {
+  const otherActivities = ["Walking", "Hiking", "Cycling", "Strength Training", "Pilates", "Physical Therapy", "PT", "Other"];
+  const workouts = [run(5, { duration_minutes: 50 })];
+  for (const name of otherActivities) {
+    // Deliberately use 20 min/mi, not the run's 10 min/mi, to detect contamination.
+    workouts.push(run(2, { duration_minutes: 40, workout_type: { id: name, name } }));
+    workouts.push(run(2, { date: "2026-10-26", duration_minutes: 40, workout_type: { id: name, name } }));
+  }
+  workouts.push(run(2, { duration_minutes: 40, workout_type: null }));
+  const result = calculateDashboard(workouts, wednesday);
+  assert.equal(result.averagePace, 10);
+  assert.equal(result.paceWorkoutCount, 1);
+  assert.deepEqual(result.weeks.map((week) => week.miles), [0, 0, 0, 0, 0, 5]);
+});
+
+test("pace regression: no eligible runs displays a dash for every missing, zero, or invalid measurement pair", () => {
+  const ineligible = [
+    ...[null, 0, -1, NaN, Infinity, -Infinity].map((distance) => run(distance, { duration_minutes: 40 })),
+    ...[null, 0, -1, NaN, Infinity, -Infinity].map((duration) => run(2, { duration_minutes: duration })),
+    run(5, { status: "planned" }), run(5, { status: "in_progress" }),
+    run(2, { duration_minutes: 40, workout_type: { id: "walking", name: "Walking" } }),
+  ];
+  const result = calculateDashboard(ineligible, wednesday);
+  assert.equal(result.averagePace, null);
+  assert.equal(result.paceWorkoutCount, 0);
+  assert.equal(result.paceDistanceMiles, 0);
+  assert.equal(result.paceDurationMinutes, 0);
+  assert.equal(formatRunningPace(result.averagePace), "—");
+});
+
 test("pace excludes incomplete measurement pairs, zeroes, invalid values, other weeks and activities", () => {
   const result = calculateDashboard([
     run(4, { duration_minutes: 39 }), run(5, { duration_minutes: null }),

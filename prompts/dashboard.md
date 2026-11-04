@@ -138,7 +138,7 @@ Summarize what was built and explain how I can verify it.
 Run these commands from the project root:
 
 ```bash
-# All ten pure dashboard calculation/formatting tests:
+# All sixteen pure dashboard calculation/formatting tests:
 npm run test:dashboard
 
 # Only the assignment's required 4 + 5 + 6, excluding planned 8, test:
@@ -237,7 +237,7 @@ output is included. For the assignment's demonstration:
 The agent's browser checks use mocked API responses, so live signed-in Supabase
 behavior should be confirmed using these manual steps.
 
-## Verification results — summary
+## Initial implementation verification results — summary
 
 - Dashboard calculation suite: ten tests passed, including the exact required
   15-mile test; also passed under `America/Los_Angeles`.
@@ -255,3 +255,104 @@ behavior should be confirmed using these manual steps.
 - No production data changes or database migrations were performed.
 - Only `feature/dashboard` is authorized for commit/push; no main-branch switch
   or pull-request merge is authorized.
+
+## Average running pace debugging prompt — verbatim
+
+```text
+I found a bug while testing the Stride dashboard: **average running pace is incorrect.**
+
+I suspect the calculation is including workouts that aren't runs.
+
+Please investigate and fix this issue on the current `feature/dashboard` branch.
+
+### Requirements
+
+1. Average running pace must include **only completed workouts with activity type Running**.
+2. Exclude walking, hiking, cycling, strength training, Pilates, PT, and other activity types.
+3. Exclude planned and in-progress runs.
+4. Exclude completed runs with missing, zero, or invalid distance or duration.
+5. Calculate average pace as **total running duration divided by total running distance**, not the arithmetic average of individual workout paces.
+6. Display the result in minutes and seconds per mile (MM:SS/mi).
+7. If there are no eligible runs, display a dash rather than an incorrect number.
+8. Verify that the weekly mileage chart also includes only completed runs.
+
+### Testing
+
+Add or update automated tests that confirm:
+- A completed 5-mile run in 50 minutes gives a 10:00/mi pace.
+- Adding a 2-mile walk in 40 minutes does not change that pace.
+- Adding a planned run does not change that pace.
+- Two completed runs of 5 miles in 50 minutes and 3 miles in 27 minutes produce an average pace of approximately 9:38/mi.
+
+Explain what caused the bug and what you changed.
+
+Document this debugging prompt and the fix in `prompts/dashboard.md`.
+
+Do not change unrelated features. Stay on `feature/dashboard` and do not commit directly to `main`.
+```
+
+### Investigation and changes — summary, not a quotation
+
+- Checked the actual branch, pure calculation, Supabase selection with its joined
+  `workout_types` name, dashboard hook, and displayed pace. On the clean current
+  branch, both mileage and pace already shared a completed-only Running guard.
+  Pace additionally checked both measurements were finite and positive and
+  divided total eligible duration by total eligible distance.
+- Added the exact requested regression examples **before changing application
+  code**. All passed against the existing calculation. Consequently, the
+  suspected inclusion of other activities was not reproduced, and it would be
+  inaccurate to claim that an activity-filter bug was found or fixed.
+- Identified a real weakness in the old tests: the non-running examples had the
+  same per-mile pace as the run. A pace-only regression could be masked by those
+  fixtures. New cases deliberately use a walk at 20 min/mi versus a run at
+  10 min/mi, plus planned/in-progress runs with different paces.
+- Added explicit exclusion tests for Walking, Hiking, Cycling, Strength
+  Training, Pilates, Physical Therapy, PT, Other, and missing type information.
+  All six chart bins are checked for non-running contamination.
+- Added coverage for missing, zero, negative, NaN, and infinite distance/duration.
+  No eligible runs must return null pace and render a dash. A valid run with
+  missing duration can still contribute mileage, but never pace.
+- Kept the existing, correct eligibility rules, aggregate formula, and
+  current-week scope unchanged. The two-run example uses 77 / 8 = 9.625
+  minutes/mile, or 577.5 seconds, rounded to **9:38/mi**; an arithmetic mean
+  would incorrectly give 9:30/mi.
+- Made the display explicitly show `/mi` next to a valid MM:SS value and show
+  only a dash when unavailable.
+- Exposed the already-computed eligible running duration/distance totals in the
+  calculation result and displayed their breakdown plus eligible-run count.
+  This lets the user compare the live value with the actual completed Running
+  records for the labeled Monday–Sunday week, without sharing account access.
+- Added a desktop/mobile browser regression exercising the requested examples,
+  chart-table totals, calculation breakdown, and the no-eligible-runs state.
+- The cause of the user's live discrepancy is **not yet confirmed**. The
+  displayed value alone is insufficient to identify the contributing records;
+  dates, distances, durations, and activity/status details were requested.
+  Live signed-in Supabase records have not been inspected or changed.
+- No auth, schema, RLS, logger, favorites, or search behavior was changed.
+  This follow-up remains on `feature/dashboard`; it does not authorize another
+  commit or push.
+
+### Follow-up verification — summary
+
+- `npm run test:dashboard`: all 16 calculation/formatting tests passed.
+- `npx playwright test --trace off -g "dashboard"`: all 12 desktop/mobile
+  dashboard cases passed, including the new pace regression and chart checks.
+  These use intercepted API responses, not the user's live account.
+- `npm run build`: passed TypeScript checking and production build, with the
+  existing nonblocking main-chunk size advisory.
+- To run just the new pure pace regressions:
+
+  ```bash
+  node --experimental-strip-types --test --test-name-pattern="pace regression:" tests/dashboard.test.ts
+  ```
+
+- To run dashboard browser checks with the app workflow running:
+
+  ```bash
+  npx playwright test --trace off -g "dashboard"
+  ```
+
+- In the live preview, refresh Dashboard and compare the eligible-run count and
+  `Pace: … minutes ÷ … miles` breakdown with this week's completed Running
+  workouts. A zero count must display a dash; a 50-minute/5-mile eligible total
+  must display 10:00/mi.

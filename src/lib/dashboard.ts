@@ -74,6 +74,8 @@ export function calculateDashboard(workouts: readonly DashboardWorkout[], now = 
     completedWorkouts,
     averagePace: paceDistance > 0 ? paceDuration / paceDistance : null,
     paceWorkoutCount,
+    paceDistanceMiles: paceDistance,
+    paceDurationMinutes: paceDuration,
     weeks,
   };
 }

@@ -93,9 +93,14 @@ export default function DashboardPage() {
           <article className="dashboard-metric">
             <span className="dashboard-metric-label">Average running pace</span>
             {loading || error ? <span className="dashboard-skeleton" aria-label={loading ? "Loading average pace" : "Average pace unavailable"} /> : (
-              <strong className="dashboard-metric-value" data-testid="average-pace">{formatRunningPace(summary.averagePace)}</strong>
+              <strong className="dashboard-metric-value" data-testid="average-pace">
+                {formatRunningPace(summary.averagePace)}{summary.averagePace !== null && <small className="dashboard-pace-unit">/mi</small>}
+              </strong>
             )}
-            <span className="dashboard-metric-unit">min / mile · matched run records</span>
+            <span className="dashboard-metric-unit">
+              {loading || error ? "min / mile · completed runs" :
+                `${summary.paceWorkoutCount} eligible completed ${summary.paceWorkoutCount === 1 ? "run" : "runs"} · this week`}
+            </span>
           </article>
         </section>
 
@@ -103,6 +108,11 @@ export default function DashboardPage() {
           <p className="dashboard-note">
             Current week: {formatRange(summary.weekStart, summary.weekEnd)}. Mileage, workout count, and pace above cover Monday through Sunday in your local calendar.
             {summary.averagePace === null && " Pace appears when at least one completed run has both a positive distance and duration."}
+            {summary.averagePace !== null && (
+              <span data-testid="pace-calculation">
+                {" "}Pace: {summary.paceDurationMinutes.toLocaleString("en-US", { maximumFractionDigits: 3 })} minutes ÷ {summary.paceDistanceMiles.toLocaleString("en-US", { maximumFractionDigits: 3 })} miles, using only eligible completed Running workouts this week.
+              </span>
+            )}
           </p>
         )}
 

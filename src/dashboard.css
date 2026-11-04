@@ -92,6 +92,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.dashboard-pace-unit {
+  margin-left: 3px;
+  font-size: .42em;
+  font-weight: 500;
+}
+
 .dashboard-metric-unit {
   display: block;
   margin-top: 9px;

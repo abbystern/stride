@@ -557,7 +557,7 @@ test("dashboard: real calculations, six weekly totals, owner isolation and respo
   await expect(page.getByRole("heading", { name: "Training dashboard", exact: true })).toBeVisible();
   await expect(page.getByTestId("weekly-mileage")).toHaveText("15.0");
   await expect(page.getByTestId("completed-workouts")).toHaveText("6");
-  await expect(page.getByTestId("average-pace")).toHaveText("9:04");
+  await expect(page.getByTestId("average-pace")).toHaveText("9:04/mi");
   await expect(page.locator(".dashboard-chart-wrap .recharts-surface")).toBeVisible();
   await page.getByText("View weekly mileage as a table", { exact: true }).click();
   const table = page.getByRole("table", { name: "Weekly completed running mileage" });
@@ -651,5 +651,40 @@ test("dashboard: loading failure does not fabricate totals and retry restores da
   state.failRead = false;
   await page.getByRole("button", { name: "Try again", exact: true }).click();
   await expect(page.getByTestId("weekly-mileage")).toHaveText("4.0");
+  expect(state.pageErrors).toEqual([]);
+});
+
+test("dashboard pace regression: walking and planned runs cannot change pace; aggregate rounds to 9:38/mi", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-11-04T12:00:00Z"));
+  const state = await backend(page);
+  state.rows.push(record({ status: "completed", distance_miles: 5, duration_minutes: 50 }));
+  await page.goto("/app/dashboard");
+  await expect(page.getByTestId("average-pace")).toHaveText("10:00/mi");
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("5.0");
+  state.rows.push(
+    record({ id: crypto.randomUUID(), workout_type_id: activities[5].id, status: "completed", distance_miles: 2, duration_minutes: 40 }),
+    record({ id: crypto.randomUUID(), status: "planned", distance_miles: 8, duration_minutes: 32 }),
+    record({ id: crypto.randomUUID(), status: "in_progress", distance_miles: 3, duration_minutes: 12 }),
+  );
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(page.getByTestId("completed-workouts")).toHaveText("2");
+  await expect(page.getByTestId("average-pace")).toHaveText("10:00/mi");
+  await expect(page.getByTestId("pace-calculation")).toContainText("50 minutes ÷ 5 miles");
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("5.0");
+  state.rows.push(record({ id: crypto.randomUUID(), status: "completed", distance_miles: 3, duration_minutes: 27 }));
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(page.getByTestId("average-pace")).toHaveText("9:38/mi");
+  await expect(page.getByTestId("pace-calculation")).toContainText("77 minutes ÷ 8 miles");
+  await expect(page.getByTestId("weekly-mileage")).toHaveText("8.0");
+  await page.getByText("View weekly mileage as a table", { exact: true }).click();
+  const table = page.getByRole("table", { name: "Weekly completed running mileage" });
+  await expect(table.locator("tbody tr td:last-child")).toHaveText(["0.0 mi", "0.0 mi", "0.0 mi", "0.0 mi", "0.0 mi", "8.0 mi"]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: test.info().outputPath("pace-regression.png"), fullPage: true });
+  state.rows[0].distance_miles = 0;
+  state.rows[4].duration_minutes = null;
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(page.getByTestId("average-pace")).toHaveText("—");
+  await expect(page.getByTestId("pace-calculation")).toHaveCount(0);
   expect(state.pageErrors).toEqual([]);
 });
