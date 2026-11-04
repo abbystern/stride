@@ -4,3 +4,4 @@
 - [Preview server conflicts](preview-server-conflicts.md) — check duplicate Vite processes before changing React for preview hook/import errors.
 - [Calendar usability feedback](calendar-usability-feedback.md) — first-time athlete testing requested explicit rest days and easier calendar planning.
 - [Supabase query typing](supabase-query-typing.md) — check SDK builder return types; preserve owner filters and cardinality when narrowing results.
+- [Simple recovery scope](recovery-scope.md) — first recovery version is only sleep, energy, soreness, and basic history, not the broader planned journal.

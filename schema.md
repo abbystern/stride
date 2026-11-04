@@ -12,6 +12,7 @@
 | `public.weekly_goals` | Defined and locally tested in `004_training_calendar.sql` | Run this migration manually in Supabase; remote application is not verified |
 | Strength templates, exercises, template exercises, workout sets | Defined and locally tested in `005_strength_tracker.sql` | Apply migration 005 manually; remote application has not been verified |
 | Workout local start times and Rest Day activity | Defined and locally tested in `006_calendar_improvements.sql` | Apply migration 006 manually after 001–005 |
+| `public.recovery_entries` | Defined and locally tested in `007_recovery_checkin.sql` | Run migration 007 manually in Supabase; remote application is not verified |
 
 Authentication and workout logging/validation are implemented. Feature 5 adds
 private favorites and a Starred Workouts page. The dashboard and training
@@ -514,15 +515,49 @@ minute/time constraints, rejected training measurements, unchanged RLS,
 time preservation on rescheduling and strength attachment, and stable date/time
 values under Los Angeles and Auckland database timezones.
 
-## 11. Planned tables — not implemented
+## 11. Daily recovery check-ins
+
+Source: `supabase/migrations/007_recovery_checkin.sql`.
+
+| Column | PostgreSQL type | Required/default | Keys and constraints |
+| --- | --- | --- | --- |
+| `id` | UUID | Required, `gen_random_uuid()` | Primary key |
+| `user_id` | UUID | Required, `auth.uid()` | FK to `public.users(id)`, cascades on profile deletion |
+| `date` | date | Required | Finite date; unique with `user_id` |
+| `sleep_hours` | numeric | Required | Finite, between 0 and 24 inclusive; decimals allowed |
+| `energy_rating` | integer | Required | Between 1 and 5 inclusive |
+| `soreness_rating` | integer | Required | Between 1 and 5 inclusive |
+| `created_at` | timestamptz | Required, `now()` | Creation timestamp |
+
+One user has many recovery entries, but only one per date. The application
+automatically uses today's browser-local calendar date, without converting
+it to UTC or allowing a date picker. Saving uses an atomic upsert on
+`(user_id, date)`; updates preserve the row's ID and creation timestamp.
+History is newest first, includes today's entry, and is owner-filtered.
+
+RLS is enabled. Authenticated users have SELECT/INSERT/UPDATE grants only;
+matching policies require `auth.uid() = user_id`. UPDATE checks both the old
+and new owner, preventing ownership transfer. Anonymous access and application
+DELETE access are not granted. Earlier workout/strength/calendar policies
+are unchanged. The unique owner/date index also supports private history.
+
+The new table is queried only on the protected Recovery route. A missing
+migration shows setup/retry guidance rather than pretending no entry exists
+or breaking unrelated pages. Apply **007_recovery_checkin.sql** in the existing
+Supabase project before testing; it requires `public.users` from migration
+001. Repository/local SQL tests do not prove remote application.
+
+This version contains only sleep, energy, and soreness. Nutrition, injury
+notes, charts, and integrations are not part of this implementation.
+
+## 12. Planned tables — not implemented
 
 The following remain future features from `PLAN.md`:
 
 - `nutrition_entries`
 - `nutrition_goals`
-- `recovery_entries`
 
 Workout logging, favorites, the dashboard, the weekly calendar, and strength
 templates/set tracking are implemented. Running recommendations, advanced
-progression charts, nutrition/recovery, analytics, and external integrations
+progression charts, nutrition, advanced recovery analysis, analytics, and external integrations
 remain deferred.

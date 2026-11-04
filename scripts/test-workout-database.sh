@@ -45,4 +45,5 @@ SQL
 "${psql_command[@]}" -f supabase/tests/004_training_calendar.sql
 "${psql_command[@]}" -f supabase/tests/005_strength_tracker.sql
 "${psql_command[@]}" -f supabase/tests/006_calendar_improvements.sql
-echo "PASS: workouts, stars, goals, strength, calendar times/rest days: migrations, RPCs, validation, timezones, cascades, and RLS."
+"${psql_command[@]}" -f supabase/tests/007_recovery_checkin.sql
+echo "PASS: migrations 001–007, validation, daily uniqueness, owner isolation, CRUD/RPCs, timezones, cascades, and RLS."
