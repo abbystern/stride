@@ -153,10 +153,30 @@ while keeping the existing workout journal usable.
 - Browser Auth/PostgREST requests are intercepted. These tests do not prove
   that migration 003 has been applied to the real Supabase project.
 - The agent has not applied the remote migration or used a real signed-in
-  account to verify live favorites. Complete the manual checks below.
-- No commit or push was requested or performed for this feature. Environment
-  files and generated browser output remain ignored; no real passwords or
-  Supabase keys belong in the changes.
+  account to verify live favorites. The user subsequently confirmed that
+  Feature 5 is working. This is user-reported confirmation, not an independent
+  remote database audit or confirmation of every item in the checklist below.
+- The initial implementation did not commit or push. The finalization prompt
+  below authorizes committing and pushing `feature/stars`, without switching
+  to `main` or merging. Environment files and generated browser output remain
+  ignored; no real passwords or Supabase keys belong in the changes.
+
+## Finalization and user testing confirmation — verbatim
+
+```text
+Feature 5: Starred Workouts is working.
+
+Please:
+1. Ensure `prompts/stars.md` documents the implementation and testing.
+2. Verify that `schema.md` includes the stars table.
+3. Run the build and check for errors.
+4. Confirm no secrets or `.env` files are included.
+5. Commit and push changes on `feature/stars`.
+
+Do not switch to main or merge anything.
+
+Report whether the push succeeded.
+```
 
 ## Apply the migration and manually test — summary
 

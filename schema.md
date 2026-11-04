@@ -8,7 +8,7 @@
 | `public.users` | Defined in `001_auth_users.sql` | User previously applied the migration and verified a profile |
 | `public.workout_types` | Defined and locally tested in `002_workout_database.sql` | Available in the user's successful Feature 3 manual tests |
 | `public.workouts` | Defined and locally tested in `002_workout_database.sql` | User confirmed real CRUD and persistence in Feature 3 |
-| `public.stars` | Defined in `003_stars.sql`, with local security tests | Requires manual review and application in Supabase |
+| `public.stars` | Defined in `003_stars.sql`, with local security tests | User confirmed Feature 5 is working; remote schema not independently inspected |
 
 Authentication and workout logging/validation are implemented. Feature 5 adds
 private favorites and a Starred Workouts page. There are still no dashboards or
