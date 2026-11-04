@@ -28,3 +28,17 @@ mtime_ms = 1793831617077
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/5dd1c2d2-a9e5-40a8-a8e3-942aed0a24f8/9ec1e039-4a8d-4392-adf0-361dba71ac25"
 storage_version_token = "1793831630280909"
 content_type = "image/png"
+
+[[outputs]]
+id = "CJ2RR44YWZX8X1wO6dFBG"
+uri = "file://docs/test-evidence/dashboard-fail.png"
+type = "image"
+title = "Screenshot 3 — Dashboard mileage failure"
+description = "Actual test output: a temporary calculation copy includes the planned 8-mile run, producing 23 miles instead of the asserted 15. Production code is unchanged."
+logical_id = "1ab9ef8e-e2d8-42f1-a666-52e2a6e37a71"
+content_hash = "sha256:2c546a1e82481978893d2eb5474ea6efdb28a69c0045a0e6cb59bfbf1f0b0289"
+size = 152618
+mtime_ms = 1793831665233
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/1ab9ef8e-e2d8-42f1-a666-52e2a6e37a71/b96addce-3d58-43e7-b09c-f7935c038753"
+storage_version_token = "1793831685448215"
+content_type = "image/png"

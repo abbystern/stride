@@ -185,4 +185,10 @@ When you're finished, give me:
   with its actual-output `.txt` transcript. The unmodified migration policies
   passed all five isolation checks, with test exit code 0. B read/updated/deleted
   zero A rows, and A's full original row remained unchanged.
-  Paused for user confirmation before screenshot 3.
+  User confirmed screenshot 2 was captured before proceeding.
+- Screenshot 3 generated: `docs/test-evidence/dashboard-fail.png`,
+  with its actual-output `.txt` transcript. The temporary calculation copy
+  admitted the planned 8-mile run and failed the unchanged assertion:
+  actual 23, expected 15, test exit code 1. Temporary copies were deleted;
+  production source remains correct and untouched.
+  Paused for user confirmation before screenshot 4.

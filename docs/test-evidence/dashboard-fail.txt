@@ -1,0 +1,36 @@
+$ node scripts/demonstrate-dashboard.mjs
+
+TEST-ONLY DEFECT: a temporary copy of the real dashboard function includes planned runs.
+Production source and the assertion expecting 15 miles are unchanged.
+✖ required dashboard test: completed runs of 4 + 5 + 6 miles, excluding a planned 8-mile run, total 15 miles (13.288052ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 302.652237
+
+✖ failing tests:
+
+test at generated-artifacts/dashboard-mutation-rm21nz/dashboard.test.ts:16:1
+✖ required dashboard test: completed runs of 4 + 5 + 6 miles, excluding a planned 8-mile run, total 15 miles (13.288052ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  23 !== 15
+  
+      at TestContext.<anonymous> (file:///home/runner/workspace/generated-artifacts/dashboard-mutation-rm21nz/dashboard.test.ts:23:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 23,
+    expected: 15,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+Actual exit code: 1
