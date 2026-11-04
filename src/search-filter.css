@@ -3,7 +3,7 @@
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: #f2f4ef;
+  background: #f1f0eb;
 }
 
 .workout-filters__top {
@@ -16,7 +16,7 @@
 
 .workout-filters__title {
   margin: 0;
-  color: #536154;
+  color: #22252a;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: .04em;
@@ -28,7 +28,7 @@
   border: 1px solid transparent;
   border-radius: 7px;
   background: transparent;
-  color: var(--sage-dark);
+  color: #2447dc;
   cursor: pointer;
   font: inherit;
   font-size: 12px;
@@ -38,7 +38,7 @@
 }
 
 .workout-filters__clear:hover:not(:disabled) {
-  background: #e8ede5;
+  background: #e9edff;
 }
 
 .workout-filters__clear:disabled {
@@ -78,14 +78,14 @@
 }
 
 .workout-filter__control:focus-within {
-  border-color: #94aa94;
-  box-shadow: 0 0 0 3px rgb(128 155 129 / 13%);
+  border-color: var(--cobalt);
+  box-shadow: 0 0 0 3px rgb(52 92 255 / 16%);
 }
 
 .workout-filter__control svg {
   flex: 0 0 auto;
   margin-left: 11px;
-  color: #899286;
+  color: #666b73;
 }
 
 .workout-filter input,
@@ -126,13 +126,13 @@
   border: 0;
   border-radius: 7px;
   background: transparent;
-  color: #7a8378;
+  color: #666b73;
   cursor: pointer;
 }
 
 .workout-filter__clear-search:hover {
-  background: #edf1e9;
-  color: var(--sage-dark);
+  background: #e9edff;
+  color: #2447dc;
 }
 
 .workout-filter__notice {
@@ -166,7 +166,7 @@
   justify-content: space-between;
   gap: 12px;
   margin: 0 0 8px;
-  color: #777f76;
+  color: #666b73;
   font-size: 12px;
 }
 

@@ -2,8 +2,8 @@
 
 :root {
   font-family: "DM Sans", sans-serif;
-  color: #262b27;
-  background: #f8f8f4;
+  color: #22252a;
+  background: #faf9f5;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -11,14 +11,16 @@
   font-optical-sizing: auto;
   font-weight: 400;
 
-  --paper: #f8f8f4;
+  --paper: #faf9f5;
   --white: #fffefa;
-  --ink: #262b27;
-  --muted: #7f857d;
-  --sage: #68836e;
-  --sage-dark: #55715b;
-  --sage-light: #e5ebe2;
-  --line: #e8e9e2;
+  --ink: #22252a;
+  --muted: #666b73;
+  --cobalt: #345cff;
+  --cobalt-dark: #2447dc;
+  --cobalt-soft: #e9edff;
+  --coral: #ff654f;
+  --lime: #d7f45b;
+  --line: #e7e5df;
   --serif: "Manrope", sans-serif;
 }
 
@@ -50,7 +52,7 @@ a {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
-  outline: 3px solid #a6b9a5;
+  outline: 3px solid #345cff;
   outline-offset: 3px;
 }
 
@@ -92,17 +94,17 @@ input:focus-visible {
   width: 32px;
   height: 32px;
   place-items: center;
-  border: 1px solid #d9e1d5;
+  border: 1px solid #cbd4ff;
   border-radius: 10px;
-  background: #edf1e9;
-  color: var(--sage);
+  background: #e9edff;
+  color: var(--cobalt);
 }
 
 .header-note {
   display: flex;
   align-items: center;
   gap: 9px;
-  color: #858a82;
+  color: #666b73;
   font-size: 12px;
   letter-spacing: 0.01em;
 }
@@ -111,7 +113,7 @@ input:focus-visible {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #9daf99;
+  background: var(--coral);
 }
 
 .auth-content {
@@ -126,7 +128,7 @@ input:focus-visible {
 }
 
 .eyebrow {
-  color: var(--sage);
+  color: var(--cobalt);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -145,7 +147,7 @@ input:focus-visible {
 .form-heading > p,
 .confirmation-card > p {
   margin: 0;
-  color: #777d75;
+  color: #666b73;
   font-size: 14px;
   line-height: 1.7;
 }
@@ -156,28 +158,23 @@ input:focus-visible {
   gap: 4px;
   margin: 34px 0 26px;
   padding: 4px;
-  border: 1px solid #e9eae4;
+  border: 1px solid #e7e5df;
   border-radius: 11px;
-  background: #f1f2ed;
+  background: #f1f0eb;
 }
 
 .auth-tabs a {
   padding: 10px;
   border-radius: 8px;
-  color: #81877f;
+  color: #666b73;
   font-size: 12px;
   font-weight: 600;
   text-align: center;
-  transition:
-    background 150ms ease,
-    color 150ms ease,
-    box-shadow 150ms ease;
 }
 
 .auth-tabs a.active {
-  background: var(--white);
-  box-shadow: 0 1px 3px rgb(40 48 38 / 8%);
-  color: var(--ink);
+  background: var(--cobalt);
+  color: #fffefa;
 }
 
 .auth-form {
@@ -200,7 +197,7 @@ input:focus-visible {
 }
 
 .password-hint {
-  color: #93988f;
+  color: #666b73;
   font-size: 10px;
 }
 
@@ -212,20 +209,17 @@ input:focus-visible {
   border: 1px solid #e2e4dd;
   border-radius: 9px;
   background: var(--white);
-  transition:
-    border 160ms ease,
-    box-shadow 160ms ease;
 }
 
 .input-wrap:focus-within {
-  border-color: #94aa94;
-  box-shadow: 0 0 0 3px rgb(128 155 129 / 13%);
+  border-color: var(--cobalt);
+  box-shadow: 0 0 0 3px rgb(52 92 255 / 16%);
 }
 
 .input-icon {
   flex: 0 0 auto;
   margin-left: 14px;
-  color: #9aa096;
+  color: #666b73;
 }
 
 .input-wrap input {
@@ -240,7 +234,7 @@ input:focus-visible {
 }
 
 .input-wrap input::placeholder {
-  color: #b1b5ad;
+  color: #666b73;
 }
 
 .input-wrap:focus-within input:focus-visible {
@@ -256,12 +250,12 @@ input:focus-visible {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #9aa096;
+  color: #666b73;
   cursor: pointer;
 }
 
 .password-toggle:hover {
-  color: var(--sage-dark);
+  color: var(--cobalt-dark);
 }
 
 .submit-button {
@@ -273,19 +267,15 @@ input:focus-visible {
   margin-top: 27px;
   border: 0;
   border-radius: 9px;
-  background: var(--sage);
-  color: white;
+  background: var(--cobalt);
+  color: #fffefa;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  transition:
-    background 150ms ease,
-    transform 150ms ease;
 }
 
 .submit-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  background: var(--sage-dark);
+  background: var(--cobalt-dark);
 }
 
 .submit-button:disabled {
@@ -298,16 +288,6 @@ input:focus-visible {
   font-size: 19px;
   font-weight: 400;
   line-height: 1;
-}
-
-.spinner {
-  animation: spin 900ms linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .form-error {
@@ -343,14 +323,14 @@ input:focus-visible {
   justify-content: center;
   gap: 6px;
   margin: 25px 0 0;
-  color: #92978f;
+  color: #666b73;
   font-size: 11px;
 }
 
 .auth-footer {
   justify-content: flex-start;
   gap: 11px;
-  color: #969b93;
+  color: #666b73;
   font-size: 10px;
 }
 
@@ -369,7 +349,7 @@ input:focus-visible {
   justify-content: space-between;
   overflow: hidden;
   padding: 40px clamp(30px, 5vw, 74px) 30px;
-  background: #e9eee7;
+  background: #e9edff;
 }
 
 .auth-aside::before {
@@ -378,7 +358,7 @@ input:focus-visible {
   right: -25%;
   width: 90%;
   aspect-ratio: 1;
-  border: 1px solid rgb(101 129 106 / 8%);
+  border: 1px solid rgb(52 92 255 / 10%);
   border-radius: 50%;
   content: "";
 }
@@ -390,7 +370,7 @@ input:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #768476;
+  color: #565f70;
 }
 
 .aside-index,
@@ -419,7 +399,7 @@ input:focus-visible {
   position: absolute;
   top: 50%;
   left: 50%;
-  border: 1px solid rgb(102 130 107 / 23%);
+  border: 1px solid rgb(52 92 255 / 22%);
   border-radius: 50%;
   transform: translate(-50%, -50%) rotate(-22deg);
 }
@@ -449,9 +429,9 @@ input:focus-visible {
   width: 36px;
   height: 36px;
   place-items: center;
-  border: 1px solid rgb(101 129 106 / 28%);
+  border: 1px solid rgb(52 92 255 / 24%);
   border-radius: 50%;
-  background: #e9eee7;
+  background: #e9edff;
   transform: translate(-50%, -50%);
 }
 
@@ -459,20 +439,20 @@ input:focus-visible {
 .orbit-node {
   display: block;
   border-radius: 50%;
-  background: #829a82;
+  background: var(--cobalt);
 }
 
 .orbit-center-dot {
   width: 9px;
   height: 9px;
-  box-shadow: 0 0 0 5px rgb(130 154 130 / 12%);
+  box-shadow: 0 0 0 5px rgb(52 92 255 / 12%);
 }
 
 .orbit-node {
   position: absolute;
   width: 7px;
   height: 7px;
-  border: 2px solid #e9eee7;
+  border: 2px solid #e9edff;
   box-sizing: content-box;
 }
 
@@ -486,7 +466,7 @@ input:focus-visible {
   bottom: 31px;
   width: 5px;
   height: 5px;
-  background: #b5a986;
+  background: var(--coral);
 }
 
 .node-three {
@@ -498,7 +478,7 @@ input:focus-visible {
 
 .aside-kicker {
   margin: 0 0 15px;
-  color: #718373;
+  color: #345cff;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.16em;
@@ -507,7 +487,7 @@ input:focus-visible {
 
 .aside-copy h2 {
   margin: 0;
-  color: #2d3730;
+  color: var(--ink);
   font-family: var(--serif);
   font-size: clamp(36px, 4.2vw, 54px);
   font-weight: 500;
@@ -516,14 +496,14 @@ input:focus-visible {
 }
 
 .aside-copy h2 em {
-  color: #718b72;
+  color: var(--cobalt-dark);
   font-weight: 500;
 }
 
 .aside-description {
   max-width: 305px;
   margin: 19px 0 22px;
-  color: #737e73;
+  color: #555c65;
   font-size: 13px;
   line-height: 1.75;
 }
@@ -534,7 +514,7 @@ input:focus-visible {
   gap: 11px;
   margin: 0;
   padding: 0;
-  color: #5e6b60;
+  color: #454b54;
   font-size: 11px;
   list-style: none;
 }
@@ -546,7 +526,7 @@ input:focus-visible {
 }
 
 .aside-benefits svg {
-  color: #7f997f;
+  color: var(--cobalt);
 }
 
 .aside-bottom {
@@ -557,7 +537,7 @@ input:focus-visible {
 .aside-bottom-line {
   width: 33px;
   height: 1px;
-  background: #aebcaf;
+  background: #aeb8dc;
 }
 
 .confirmation-card {
@@ -570,14 +550,14 @@ input:focus-visible {
   height: 46px;
   margin-bottom: 24px;
   place-items: center;
-  border: 1px solid #d9e1d5;
+  border: 1px solid #cbd4ff;
   border-radius: 14px;
-  background: #edf1e9;
-  color: var(--sage);
+  background: #e9edff;
+  color: var(--cobalt);
 }
 
 .confirmation-card strong {
-  color: #4e5d50;
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
 
@@ -586,7 +566,7 @@ input:focus-visible {
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--sage-dark);
+  color: var(--cobalt-dark);
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
@@ -611,15 +591,7 @@ input:focus-visible {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #8ba18a;
-  animation: pulse 1s ease-in-out infinite alternate;
-}
-
-@keyframes pulse {
-  to {
-    opacity: 0.35;
-    transform: scale(0.7);
-  }
+  background: var(--cobalt);
 }
 
 .config-screen {
@@ -633,7 +605,7 @@ input:focus-visible {
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--white);
-  box-shadow: 0 12px 36px rgb(40 48 38 / 5%);
+  box-shadow: 0 12px 36px rgb(34 37 42 / 5%);
 }
 
 .config-card h1 {
@@ -644,13 +616,13 @@ input:focus-visible {
 }
 
 .config-card p {
-  color: #777d75;
+  color: #666b73;
   font-size: 14px;
   line-height: 1.7;
 }
 
 .config-card code {
-  color: var(--sage-dark);
+  color: var(--cobalt-dark);
   font-size: 12px;
 }
 
@@ -659,9 +631,7 @@ input:focus-visible {
   min-height: 100vh;
   flex-direction: column;
   padding: 30px clamp(22px, 6vw, 80px) 24px;
-  background:
-    radial-gradient(ellipse at 50% 45%, #eff2ec 0, transparent 50%),
-    var(--paper);
+  background: var(--paper);
 }
 
 .account-header {
@@ -676,7 +646,7 @@ input:focus-visible {
   border: 1px solid #e3e6de;
   border-radius: 8px;
   background: rgb(255 254 250 / 70%);
-  color: #59635a;
+  color: #464d57;
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
@@ -684,7 +654,7 @@ input:focus-visible {
 
 .signout-button:hover {
   border-color: #c6d2c4;
-  color: var(--sage-dark);
+  color: var(--cobalt-dark);
 }
 
 .account-content {
@@ -710,7 +680,7 @@ input:focus-visible {
 
 .emblem-ring {
   position: absolute;
-  border: 1px solid #d8e1d4;
+  border: 1px solid #cbd4ff;
   border-radius: 50%;
 }
 
@@ -722,16 +692,16 @@ input:focus-visible {
 .ring-b {
   width: 130px;
   height: 130px;
-  border-color: #e4e9df;
+  border-color: #e4e5ec;
 }
 
 .emblem-dot {
   width: 23px;
   height: 23px;
-  border: 6px solid #f8f8f4;
+  border: 6px solid #faf9f5;
   border-radius: 50%;
-  background: #819981;
-  box-shadow: 0 0 0 1px #cbd7c8;
+  background: var(--coral);
+  box-shadow: 0 0 0 1px #e6b0a8;
 }
 
 .account-content h1 {
@@ -745,13 +715,13 @@ input:focus-visible {
 .account-welcome,
 .account-next {
   margin: 0;
-  color: #747b73;
+  color: #666b73;
   font-size: 13px;
   line-height: 1.7;
 }
 
 .account-welcome strong {
-  color: #536754;
+  color: #22252a;
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -760,7 +730,7 @@ input:focus-visible {
   width: 38px;
   height: 1px;
   margin: 25px 0 21px;
-  background: #becbb9;
+  background: #cbd4ff;
 }
 
 .account-next {
@@ -773,7 +743,7 @@ input:focus-visible {
 }
 
 .account-footer {
-  color: #969b93;
+  color: #666b73;
   font-size: 10px;
 }
 
@@ -828,16 +798,5 @@ input:focus-visible {
   .account-shell {
     padding-right: 20px;
     padding-left: 20px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
   }
 }

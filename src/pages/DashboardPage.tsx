@@ -204,14 +204,14 @@ export default function DashboardPage() {
                     <XAxis
                       dataKey="weekStart"
                       tickLine={false}
-                      axisLine={{ stroke: "#dfe4db" }}
+                      axisLine={{ stroke: "#e7e5df" }}
                       interval={0}
                       tick={({ x, y, payload }) => {
                         const week = weeks.find((item) => item.weekStart === payload.value);
                         if (!week) return <g />;
                         return (
                           <g transform={`translate(${x},${y})`}>
-                            <text textAnchor="middle" fill="#7c847a" fontSize="10">
+                            <text textAnchor="middle" fill="#626872" fontSize="10">
                               <tspan x="0" dy="12">{formatWeekDate(week.weekStart)}</tspan>
                               <tspan x="0" dy="12">– {formatWeekDate(week.weekEnd)}</tspan>
                             </text>
@@ -230,9 +230,9 @@ export default function DashboardPage() {
                       width={42}
                       tickFormatter={formatMileage}
                     />
-                    <Tooltip content={<MileageTooltip />} cursor={{ fill: "#f3f5f0" }} />
-                    <Bar dataKey="miles" name="Miles" fill="#91a58e" radius={[4, 4, 0, 0]} maxBarSize={48} isAnimationActive={false}>
-                      <LabelList dataKey="miles" position="top" formatter={formatMileage} fontSize={10} fill="#4b5c49" />
+                    <Tooltip content={<MileageTooltip />} cursor={{ fill: "#e9edff" }} isAnimationActive={false} />
+                    <Bar dataKey="miles" name="Miles" fill="#345cff" radius={[4, 4, 0, 0]} maxBarSize={48} isAnimationActive={false}>
+                      <LabelList dataKey="miles" position="top" formatter={formatMileage} fontSize={10} fill="#2447dc" />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
