@@ -56,3 +56,59 @@ mtime_ms = 1793831722189
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/732b0e75-82c1-47bd-ab56-4b3246fc2926/7a2f50c6-acaa-43d3-81ef-cd4541c9edc5"
 storage_version_token = "1793831735944260"
 content_type = "image/png"
+
+[[outputs]]
+id = "xd3YxCUk3gL_mz4q08sHi"
+uri = "file://generated-artifacts/bright-colors/dashboard-desktop.png"
+type = "image"
+title = "Stride: Dashboard — desktop"
+description = "Verified bright-palette screenshot using synthetic workout data; no live user records."
+logical_id = "493ecc38-2336-41be-855c-4f5e96e43f80"
+content_hash = "sha256:0b2e14bf170eb5399495a84039c4d54643fe13099732dabece8abf8eb43ec265"
+size = 110492
+mtime_ms = 1793834312717
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/493ecc38-2336-41be-855c-4f5e96e43f80/2249a2a5-648f-42af-96c8-1cba4065ce15"
+storage_version_token = "1793834534524924"
+content_type = "image/png"
+
+[[outputs]]
+id = "Dc5caZf1DlTW7_WBT3a69"
+uri = "file://generated-artifacts/bright-colors/dashboard-mobile.png"
+type = "image"
+title = "Stride: Dashboard — mobile"
+description = "Verified bright-palette screenshot using synthetic workout data; no live user records."
+logical_id = "ccb9724b-f63c-4840-b805-d192c6e557ef"
+content_hash = "sha256:3df2773fe79afb9aca4e895f91b3cf7c24df6b27eca80147ce8f319032d2b294"
+size = 105932
+mtime_ms = 1793834324023
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/ccb9724b-f63c-4840-b805-d192c6e557ef/4aaaaa0f-0359-438e-ac7b-28b2c542d4d4"
+storage_version_token = "1793834535118504"
+content_type = "image/png"
+
+[[outputs]]
+id = "sgs95AgsEBf5vxeOLecEZ"
+uri = "file://generated-artifacts/bright-colors/calendar-desktop.png"
+type = "image"
+title = "Stride: Calendar — desktop"
+description = "Verified bright-palette screenshot using synthetic workout data; no live user records."
+logical_id = "b1de3d7d-84d3-4def-8b87-f658661dd246"
+content_hash = "sha256:84cbdc177bd9d1844af93da5ac0ecabae0ecb1da629f916c5e047ae72124f64d"
+size = 114035
+mtime_ms = 1793834315930
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/b1de3d7d-84d3-4def-8b87-f658661dd246/11521cef-a4e3-4193-a9a4-27fffd2af28b"
+storage_version_token = "1793834535790718"
+content_type = "image/png"
+
+[[outputs]]
+id = "pfshDVvqO2Rvdtt1ONNMo"
+uri = "file://generated-artifacts/bright-colors/calendar-mobile.png"
+type = "image"
+title = "Stride: Calendar — mobile"
+description = "Verified bright-palette screenshot using synthetic workout data; no live user records."
+logical_id = "9cb44693-84ef-4d67-9f65-29a95b52b10c"
+content_hash = "sha256:c4b75278587d40e126739876a9ae846acf7bbbbc453d5b8f845f1ce97cf4f879"
+size = 122919
+mtime_ms = 1793834326856
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/9cb44693-84ef-4d67-9f65-29a95b52b10c/03cd8687-3285-44a9-a48b-c86ab0b8c4c1"
+storage_version_token = "1793834536549441"
+content_type = "image/png"
