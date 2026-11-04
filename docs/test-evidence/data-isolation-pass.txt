@@ -1,0 +1,12 @@
+$ bash scripts/test-data-isolation.sh
+
+User data isolation | real PostgreSQL RLS | disposable local database
+Correct implementation: unchanged policies from migration 002.
+psql:supabase/tests/required_data_isolation.sql:52: INFO:  PASS 1/5: User A reads own workout (expected 1, actual 1)
+psql:supabase/tests/required_data_isolation.sql:52: INFO:  PASS 2/5: User B cannot read A workout (expected 0, actual 0)
+psql:supabase/tests/required_data_isolation.sql:52: INFO:  PASS 3/5: User B cannot update A workout (affected rows 0)
+psql:supabase/tests/required_data_isolation.sql:52: INFO:  PASS 4/5: User B cannot delete A workout (affected rows 0)
+psql:supabase/tests/required_data_isolation.sql:52: INFO:  PASS 5/5: User A workout remains completely unchanged
+psql:supabase/tests/required_data_isolation.sql:52: INFO:  PASS: all 5 data isolation checks passed
+
+Actual exit code: 0

@@ -1,6 +1,6 @@
 ---
 name: Browser test runtime
-description: Why browser automation should prefer Replit's working system browser.
+description: System-browser and long-suite execution constraints on Replit/Nix.
 ---
 
 Prefer the available system Chromium wrapper for browser tests in this Replit
@@ -14,3 +14,15 @@ installing more system packages.
 **How to apply:** When browser automation fails before opening a page, check for
 an existing system browser before downloading another browser or changing the
 application. Keep any executable override confined to test configuration.
+
+## Long full-suite runs
+
+Run long browser suites in a background shell with a generous completion
+check-in rather than a foreground shell with a short execution cap.
+
+**Why:** A passing browser run was terminated by the shell tool's time limit
+before the full suite completed. Tool timeout is not evidence of a test failure.
+
+**How to apply:** Keep the established worker settings, let the background
+task report completion, and inspect its final exit status and summary. Do not
+change app code or raise browser concurrency merely to avoid a tool timeout.

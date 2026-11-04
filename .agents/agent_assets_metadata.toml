@@ -1,0 +1,58 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "D9aVw5AQo42MNa2f69oxa"
+uri = "file://docs/test-evidence/data-isolation-fail.png"
+type = "image"
+title = "Screenshot 1 — Data isolation failure"
+description = "Real PostgreSQL test output captured in a read-only log viewer. The intentional temporary local policy defect lets User B read one private row; expected zero. No hosted security changes."
+logical_id = "fefcc410-b0af-492c-b446-08ecb8ced24e"
+content_hash = "sha256:a1a1880af5241e71b84650a98809540aafd76383f2e447de5ee577025432974b"
+size = 104064
+mtime_ms = 1793831534216
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/fefcc410-b0af-492c-b446-08ecb8ced24e/ddca54c8-9f69-492c-b45b-9b3ed70a8410"
+storage_version_token = "1793831571035841"
+content_type = "image/png"
+
+[[outputs]]
+id = "xuvLWTyhco3vHtWTMUEKz"
+uri = "file://docs/test-evidence/data-isolation-pass.png"
+type = "image"
+title = "Screenshot 2 — Data isolation passes"
+description = "Actual local PostgreSQL output: all five isolation checks pass with the unchanged production migration policies; test exit code 0."
+logical_id = "5dd1c2d2-a9e5-40a8-a8e3-942aed0a24f8"
+content_hash = "sha256:8c1a71c8249a3cd5a2dedcfc8ffaea605694d7b780bff9aa342e24e6ec77a096"
+size = 102590
+mtime_ms = 1793831617077
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/5dd1c2d2-a9e5-40a8-a8e3-942aed0a24f8/9ec1e039-4a8d-4392-adf0-361dba71ac25"
+storage_version_token = "1793831630280909"
+content_type = "image/png"
+
+[[outputs]]
+id = "CJ2RR44YWZX8X1wO6dFBG"
+uri = "file://docs/test-evidence/dashboard-fail.png"
+type = "image"
+title = "Screenshot 3 — Dashboard mileage failure"
+description = "Actual test output: a temporary calculation copy includes the planned 8-mile run, producing 23 miles instead of the asserted 15. Production code is unchanged."
+logical_id = "1ab9ef8e-e2d8-42f1-a666-52e2a6e37a71"
+content_hash = "sha256:2c546a1e82481978893d2eb5474ea6efdb28a69c0045a0e6cb59bfbf1f0b0289"
+size = 152618
+mtime_ms = 1793831665233
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/1ab9ef8e-e2d8-42f1-a666-52e2a6e37a71/b96addce-3d58-43e7-b09c-f7935c038753"
+storage_version_token = "1793831685448215"
+content_type = "image/png"
+
+[[outputs]]
+id = "YgbzR6GxPqZWsW1wJtU54"
+uri = "file://docs/test-evidence/dashboard-pass.png"
+type = "image"
+title = "Screenshot 4 — Dashboard mileage passes"
+description = "Actual test output: the unchanged production calculation totals 15 miles, excluding the planned run and non-running activities. Test exit code 0."
+logical_id = "732b0e75-82c1-47bd-ab56-4b3246fc2926"
+content_hash = "sha256:4924afd173802b6901aaee06d7aecb733738a9e7d8e39aa71067de35ccc3374e"
+size = 56915
+mtime_ms = 1793831722189
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:cab55511-e77f-487b-9233-8a06e8cfaa33/732b0e75-82c1-47bd-ab56-4b3246fc2926/7a2f50c6-acaa-43d3-81ef-cd4541c9edc5"
+storage_version_token = "1793831735944260"
+content_type = "image/png"

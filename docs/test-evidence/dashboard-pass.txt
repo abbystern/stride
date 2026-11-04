@@ -1,0 +1,17 @@
+$ npm run test:required-dashboard
+
+
+> stride@1.0.0 test:required-dashboard
+> node --experimental-strip-types --test --test-name-pattern='^required dashboard test:' tests/dashboard.test.ts
+
+✔ required dashboard test: completed runs of 4 + 5 + 6 miles, excluding a planned 8-mile run, total 15 miles (15.649101ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 277.791947
+
+Actual exit code: 0
