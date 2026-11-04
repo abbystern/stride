@@ -173,8 +173,8 @@ When you're finished, give me:
 - Isolation baseline: all five real-RLS checks passed.
 - Dashboard baseline: completed 4 + 5 + 6 = 15 miles; planned 8 and completed
   walking/cycling are excluded.
-- Red/green screenshots and final full-suite/build results are recorded as
-  the user confirms each required checkpoint. No commit/push until completion.
+- All four red/green checkpoints were completed and individually confirmed
+  by the user before final verification and commit/push.
 - Screenshot 1 generated: `docs/test-evidence/data-isolation-fail.png`,
   with its actual-output `.txt` transcript. The intentional local SELECT-policy
   defect exposed one A row to B (expected zero), producing test exit code 3.
@@ -217,3 +217,16 @@ When you're finished, give me:
 - No hosted migrations, production security changes, or new app features
   were required. All four screenshot checkpoints were confirmed by the user
   before final verification and commit/push on `test/automated-tests`.
+
+### Final user-requested reconfirmation — November 4, 2026
+
+- Reran `npm run test:required`: all five data-isolation assertions passed,
+  and the production dashboard calculation again returned the expected
+  15 completed running miles.
+- Reran `npm run build`: passed; only the existing nonblocking chunk-size
+  advisory remains.
+- All four PNGs and matching output transcripts are present in
+  `docs/test-evidence/`. The user confirmed all screenshots were captured;
+  no additional screenshots need to be added.
+- No application behavior, production policies, or migrations changed during
+  this final documentation pass. Do not merge the testing branch.

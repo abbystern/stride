@@ -100,3 +100,13 @@ These are small assignment evidence assets intended to be committed.
 Local database files, temporary source copies, and bulk browser artifacts
 are not committed. Never put passwords, tokens, `.env` files, or real user
 records in evidence.
+
+## Completion status
+
+All four PNGs listed above and their matching `.txt` transcripts are present
+in this directory and included in Git. The user confirmed each screenshot
+checkpoint. **No screenshots still need to be added.**
+
+Final reconfirmation on November 4, 2026: `npm run test:required` and
+`npm run build` both passed with the correct implementation. Earlier full
+verification also passed all 51 unit tests and 70 desktop/mobile browser tests.
