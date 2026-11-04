@@ -138,7 +138,7 @@ Summarize what was built and explain how I can verify it.
 Run these commands from the project root:
 
 ```bash
-# All sixteen pure dashboard calculation/formatting tests:
+# All seventeen pure dashboard calculation/formatting tests:
 npm run test:dashboard
 
 # Only the assignment's required 4 + 5 + 6, excluding planned 8, test:
@@ -324,17 +324,19 @@ Do not change unrelated features. Stay on `feature/dashboard` and do not commit 
   records for the labeled Monday–Sunday week, without sharing account access.
 - Added a desktop/mobile browser regression exercising the requested examples,
   chart-table totals, calculation breakdown, and the no-eligible-runs state.
-- The cause of the user's live discrepancy is **not yet confirmed**. The
-  displayed value alone is insufficient to identify the contributing records;
-  dates, distances, durations, and activity/status details were requested.
-  Live signed-in Supabase records have not been inspected or changed.
+- Follow-up clarification established the reported example as a 4-mile run with
+  a duration of 42 minutes. The displayed 10:30/mi is mathematically correct:
+  42 / 4 = 10.5 minutes/mile = 10 minutes 30 seconds per mile. This example does
+  not demonstrate a calculation defect or inclusion of non-running activities.
+  Added that exact case as a regression test and left the correct formula
+  unchanged. Live signed-in Supabase records have not been inspected or changed.
 - No auth, schema, RLS, logger, favorites, or search behavior was changed.
   This follow-up remains on `feature/dashboard`; it does not authorize another
   commit or push.
 
 ### Follow-up verification — summary
 
-- `npm run test:dashboard`: all 16 calculation/formatting tests passed.
+- `npm run test:dashboard`: all 17 calculation/formatting tests passed.
 - `npx playwright test --trace off -g "dashboard"`: all 12 desktop/mobile
   dashboard cases passed, including the new pace regression and chart checks.
   These use intercepted API responses, not the user's live account.

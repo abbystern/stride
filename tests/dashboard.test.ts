@@ -60,6 +60,14 @@ test("pace regression: a completed 5-mile run in 50 minutes gives 10:00/mi", () 
   assert.equal(result.paceWorkoutCount, 1);
 });
 
+test("pace regression: a completed 4-mile run in 42 minutes correctly gives 10:30/mi", () => {
+  const result = calculateDashboard([run(4, { duration_minutes: 42 })], wednesday);
+  assert.equal(result.averagePace, 10.5);
+  assert.equal(result.paceDurationMinutes, 42);
+  assert.equal(result.paceDistanceMiles, 4);
+  assert.equal(formatRunningPace(result.averagePace), "10:30");
+});
+
 test("pace regression: adding a 2-mile walk in 40 minutes does not change running pace or chart mileage", () => {
   const result = calculateDashboard([
     run(5, { duration_minutes: 50 }),
