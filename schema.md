@@ -9,11 +9,13 @@
 | `public.workout_types` | Defined and locally tested in `002_workout_database.sql` | Available in the user's successful Feature 3 manual tests |
 | `public.workouts` | Defined and locally tested in `002_workout_database.sql` | User confirmed real CRUD and persistence in Feature 3 |
 | `public.stars` | Defined in `003_stars.sql`, with local security tests | User confirmed Feature 5 is working; remote schema not independently inspected |
+| `public.weekly_goals` | Defined and locally tested in `004_training_calendar.sql` | Run this migration manually in Supabase; remote application is not verified |
 
 Authentication and workout logging/validation are implemented. Feature 5 adds
-private favorites and a Starred Workouts page. There are still no dashboards or
-wearable integrations. Repository files do not prove a migration was applied
-remotely; migration 003 has not been applied by the agent.
+private favorites and a Starred Workouts page. The dashboard and training
+calendar are also implemented; wearable integrations remain out of scope.
+Repository files do not prove a migration was applied remotely. The agent has
+not applied migration 004 to the remote Supabase project.
 
 ## 1. User identities and profiles
 
@@ -315,7 +317,55 @@ ownership, cross-user joins/deletes, anonymous denial, absence of UPDATE
 privileges, repeat-run safety, and workout/profile cascade cleanup. It uses
 synthetic identities in disposable local PostgreSQL, not remote Supabase.
 
-## 8. Planned tables — not implemented
+## 8. Private weekly training goals
+
+### `public.weekly_goals`
+
+Defined in `supabase/migrations/004_training_calendar.sql`.
+
+| Column | PostgreSQL type | Required/default | Keys and constraints |
+| --- | --- | --- | --- |
+| `id` | `uuid` | Required; `gen_random_uuid()` | Primary key |
+| `user_id` | `uuid` | Required; `auth.uid()` | FK to `public.users.id`, `ON DELETE CASCADE` |
+| `week_start` | `date` | Required | Finite Monday date; unique with `user_id` |
+| `target_miles` | `numeric` | Required | Finite, nonnegative mileage; zero and decimal targets are allowed |
+
+The unique `(user_id, week_start)` constraint permits different users to have
+different goals for the same week and supports an idempotent goal upsert.
+No goal row means **Not set**, not a stored zero-mile goal. Goals remain
+attached to their week when a workout moves to another week. Profile deletion
+cascades to that user's goals.
+
+**Privileges and RLS:** Enabled. Anonymous/public access is revoked.
+Authenticated clients have only SELECT, INSERT, and UPDATE. SELECT and UPDATE
+require `auth.uid() = user_id`; INSERT and UPDATE also enforce this ownership
+with `WITH CHECK`. No client DELETE privilege or policy is supplied. Clients
+cannot read or modify another user's goal or transfer their own goal to a
+different user.
+
+The calendar reuses `public.workouts.date` and its existing owner-only RLS.
+Rescheduling updates only `date`, scoped by both workout ID and authenticated
+user ID; activity, title, status, mileage, notes, and favorites are unchanged.
+Scheduled running mileage includes planned/in-progress Running entries only.
+Completed running mileage includes completed Running entries only. Other
+activities never contribute, and invalid distances are excluded.
+
+### Applying and verifying migration 004
+
+1. In the existing project's Supabase SQL Editor, run the complete contents of
+   `supabase/migrations/004_training_calendar.sql`, after migrations 001–003.
+2. Reload `/app/calendar`, save a goal for a Monday–Sunday week, navigate away
+   and back, and refresh to confirm persistence.
+3. With a separate test account, verify the first account's goals and workouts
+   cannot be seen or changed. Do not disable RLS or use a service-role key in
+   the frontend.
+4. Local automated verification: `bash scripts/test-workout-database.sh`.
+   This creates disposable PostgreSQL fixtures, applies/reruns the migrations,
+   and checks goal ownership, upserts, uniqueness, date/mileage constraints,
+   anonymous and identity-less denial, cross-owner date updates, and cascades.
+   It does not connect to or modify remote Supabase.
+
+## 9. Planned tables — not implemented
 
 The following remain future features from `PLAN.md`:
 
@@ -323,11 +373,11 @@ The following remain future features from `PLAN.md`:
 - `exercises`
 - `template_exercises`
 - `workout_sets`
-- `weekly_goals`
 - `nutrition_entries`
 - `nutrition_goals`
 - `recovery_entries`
 
 `workouts.template_id` is also deferred until the template feature. Workout
-logging and favorites are implemented; dashboards, nutrition/recovery tables,
-analytics, and external integrations remain deferred.
+logging, favorites, the dashboard, and the simple weekly calendar are
+implemented. Templates/recommendations, nutrition/recovery tables, analytics,
+and external integrations remain deferred.

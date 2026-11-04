@@ -1,3 +1,4 @@
+import { isCalendarDate } from "./calendarModel";
 import { supabase } from "./supabase";
 import type { Workout, WorkoutPayload, WorkoutType } from "./workoutModel";
 
@@ -103,4 +104,15 @@ export async function removeWorkout(id: string, userId: string): Promise<void> {
     .eq("id", id).eq("user_id", userId).select("id");
   if (error) throw error;
   if (!data?.length) throw new Error("Workout not found or unavailable to your account. Nothing was deleted.");
+}
+
+export async function rescheduleWorkout(id: string, date: string, userId: string): Promise<Workout> {
+  requireId(id);
+  if (!isCalendarDate(date)) throw new Error("Choose a valid workout date.");
+  const { data, error } = await client().from("workouts").update({ date })
+    .eq("id", id).eq("user_id", userId).select(selection).maybeSingle()
+    .overrideTypes<Workout | null, { merge: false }>();
+  if (error) throw error;
+  if (!data) throw new Error("Workout not found or unavailable to your account. The date wasn't changed.");
+  return data;
 }

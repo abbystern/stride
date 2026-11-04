@@ -14,13 +14,15 @@ import {
 } from "../../lib/workoutModel";
 import { WorkoutLayout } from "./WorkoutLayout";
 
-type Props = { workout?: Workout; mode: "create" | "edit" };
+type Props = { workout?: Workout; mode: "create" | "edit"; initialDate?: string };
 
-export function WorkoutForm({ workout, mode }: Props) {
+export function WorkoutForm({ workout, mode, initialDate }: Props) {
   const navigate = useNavigate();
   const { types, loading: typesLoading, error: typesError, reload: reloadTypes } = useWorkoutTypes();
   const { pending, error: mutationError, clearError, createWorkout, updateWorkout } = useWorkoutMutations();
-  const [values, setValues] = useState<WorkoutFormValues>(() => emptyWorkoutValues());
+  const [values, setValues] = useState<WorkoutFormValues>(() => ({
+    ...emptyWorkoutValues(), ...(mode === "create" && initialDate ? { date: initialDate } : {}),
+  }));
   const [errors, setErrors] = useState<WorkoutFieldErrors>({});
   const [initialized, setInitialized] = useState(mode === "create");
 

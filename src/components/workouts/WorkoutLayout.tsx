@@ -12,6 +12,7 @@ export function WorkoutLayout({ children, hideStarsError = false }: { children: 
         <nav aria-label="Workout navigation">
           <NavLink to="/app">Home</NavLink>
           <NavLink to="/app/dashboard">Dashboard</NavLink>
+          <NavLink to="/app/calendar">Calendar</NavLink>
           <NavLink to="/app/workouts" end>History</NavLink>
           <NavLink to="/app/stars">Starred</NavLink>
           <NavLink to="/app/workouts/new">New workout</NavLink>
